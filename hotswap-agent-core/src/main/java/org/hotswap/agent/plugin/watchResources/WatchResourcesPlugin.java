@@ -4,7 +4,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import org.hotswap.agent.annotation.Init;
-import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.logging.AgentLogger;
