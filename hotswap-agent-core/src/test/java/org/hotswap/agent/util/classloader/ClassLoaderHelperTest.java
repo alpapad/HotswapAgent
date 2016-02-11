@@ -1,12 +1,12 @@
 package org.hotswap.agent.util.classloader;
 
-import org.hotswap.agent.testData.SimplePlugin;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ClassLoaderHelperTest {
     @Test

@@ -38,7 +38,7 @@ public class ResetBeanPostProcessorCaches {
         try {
             Field field = InitDestroyAnnotationBeanPostProcessor.class.getDeclaredField("lifecycleMetadataCache");
             field.setAccessible(true);
-            Map lifecycleMetadataCache = (Map) field.get(bpp);
+            Map<?,?> lifecycleMetadataCache = (Map<?,?>) field.get(bpp);
             lifecycleMetadataCache.clear();
             LOGGER.trace("Cache cleared: InitDestroyAnnotationBeanPostProcessor.lifecycleMetadataCache");
         } catch (Exception e) {
@@ -47,7 +47,8 @@ public class ResetBeanPostProcessorCaches {
     }
 
     // @Autowired cache
-    public static void resetAutowiredAnnotationBeanPostProcessorCache(AutowiredAnnotationBeanPostProcessor bpp) {
+    @SuppressWarnings("unchecked")
+	public static void resetAutowiredAnnotationBeanPostProcessorCache(AutowiredAnnotationBeanPostProcessor bpp) {
         try {
             Field field = AutowiredAnnotationBeanPostProcessor.class.getDeclaredField("candidateConstructorsCache");
             field.setAccessible(true);

@@ -16,10 +16,11 @@
 
 package org.hotswap.agent.javassist.tools.reflect;
 
+import org.hotswap.agent.javassist.CtClass;
+
 /**
- * Thrown by <code>makeReflective()</code> in <code>Reflection</code>
- * when there is an attempt to reflect
- * a class that is either an interface or a subclass of
+ * Thrown by <code>makeReflective()</code> in <code>Reflection</code> when there
+ * is an attempt to reflect a class that is either an interface or a subclass of
  * either ClassMetaobject or Metaobject.
  *
  * @author Brett Randall
@@ -27,7 +28,12 @@ package org.hotswap.agent.javassist.tools.reflect;
  * @see org.hotswap.agent.javassist.CannotCompileException
  */
 public class CannotReflectException extends org.hotswap.agent.javassist.CannotCompileException {
-    public CannotReflectException(String msg) {
-        super(msg);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public CannotReflectException(String msg) {
+		super(msg);
+	}
 }

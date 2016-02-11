@@ -246,11 +246,11 @@ public class ClassPathBeanDefinitionScannerAgent {
     // metadataReader contains cache of loaded classes, reset this cache before BeanDefinition is resolved
     private void resetCachingMetadataReaderFactoryCache() {
         if (getMetadataReaderFactory() instanceof CachingMetadataReaderFactory) {
-            Map metadataReaderCache = (Map) ReflectionHelper.getNoException(getMetadataReaderFactory(),
+        	Map<?,?> metadataReaderCache = (Map<?,?>) ReflectionHelper.getNoException(getMetadataReaderFactory(),
                         CachingMetadataReaderFactory.class, "metadataReaderCache");
 
             if (metadataReaderCache == null)
-                metadataReaderCache = (Map) ReflectionHelper.getNoException(getMetadataReaderFactory(),
+                metadataReaderCache = (Map<?,?>) ReflectionHelper.getNoException(getMetadataReaderFactory(),
                         CachingMetadataReaderFactory.class, "classReaderCache");
 
             if (metadataReaderCache != null) {

@@ -13,17 +13,19 @@ import static org.junit.Assert.assertEquals;
  */
 public class ClassLoaderURLPatcherTest {
 
-    @Test
+    @SuppressWarnings("resource")
+	@Test
     public void testWithoutPatch() throws Exception {
         ClassLoader appClassLoader = new URLClassLoader(new URL[]{}, getClass().getClassLoader());
-        Class pluginManagerInAppClassLoaderClass = appClassLoader.loadClass(PluginManager.class.getName());
+        Class<?> pluginManagerInAppClassLoaderClass = appClassLoader.loadClass(PluginManager.class.getName());
 
         assertEquals("Plugin Manager from parent classloader before patch", getClass().getClassLoader(),
                 pluginManagerInAppClassLoaderClass.getClassLoader());
 
     }
 
-    @Test
+    @SuppressWarnings("deprecation")
+	@Test
     public void testPatch() throws Exception {
         ClassLoaderURLPatcher classLoaderURLPatcher = new ClassLoaderURLPatcher();
 
@@ -32,7 +34,7 @@ public class ClassLoaderURLPatcherTest {
 
         classLoaderURLPatcher.patch(getClass().getClassLoader(), PluginManager.PLUGIN_PACKAGE.replace(".", "/"),
                 appClassLoader, null);
-        Class pluginManagerInAppClassLoaderClass = appClassLoader.loadClass(PluginManager.class.getName());
+        Class<?> pluginManagerInAppClassLoaderClass = appClassLoader.loadClass(PluginManager.class.getName());
 
         assertEquals("Plugin Manager from child classloader after patch", appClassLoader,
                 pluginManagerInAppClassLoaderClass.getClassLoader());

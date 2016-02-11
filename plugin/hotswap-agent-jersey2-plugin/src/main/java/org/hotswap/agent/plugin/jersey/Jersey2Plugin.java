@@ -115,7 +115,7 @@ public class Jersey2Plugin {
 	 * the Jersey Application, or if was newly annotated and will be involved in configuring the application.
 	 */
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void invalidate(CtClass ctClass, Class original) throws Exception {
+    public void invalidate(CtClass ctClass, Class<?> original) throws Exception {
     	if (allRegisteredClasses.contains(original)) {  
     		scheduler.scheduleCommand(reloadJerseyContainers);
     	} else {

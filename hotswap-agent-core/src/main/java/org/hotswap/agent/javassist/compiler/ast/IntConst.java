@@ -20,128 +20,138 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Integer constant.
  */
 public class IntConst extends ASTree {
-    protected long value;
-    protected int type;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	protected long value;
+	protected int type;
 
-    public IntConst(long v, int tokenId) {
-        value = v;
-        type = tokenId;
-    }
+	public IntConst(long v, int tokenId) {
+		value = v;
+		type = tokenId;
+	}
 
-    public long get() {
-        return value;
-    }
+	public long get() {
+		return value;
+	}
 
-    public void set(long v) {
-        value = v;
-    }
+	public void set(long v) {
+		value = v;
+	}
 
-    /* Returns IntConstant, CharConstant, or LongConstant.
-     */
-    public int getType() {
-        return type;
-    }
+	/*
+	 * Returns IntConstant, CharConstant, or LongConstant.
+	 */
+	public int getType() {
+		return type;
+	}
 
-    public String toString() {
-        return Long.toString(value);
-    }
+	@Override
+	public String toString() {
+		return Long.toString(value);
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atIntConst(this);
-    }
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atIntConst(this);
+	}
 
-    public ASTree compute(int op, ASTree right) {
-        if (right instanceof IntConst)
-            return compute0(op, (IntConst) right);
-        else if (right instanceof DoubleConst)
-            return compute0(op, (DoubleConst) right);
-        else
-            return null;
-    }
+	public ASTree compute(int op, ASTree right) {
+		if (right instanceof IntConst) {
+			return compute0(op, (IntConst) right);
+		} else if (right instanceof DoubleConst) {
+			return compute0(op, (DoubleConst) right);
+		} else {
+			return null;
+		}
+	}
 
-    private IntConst compute0(int op, IntConst right) {
-        int type1 = this.type;
-        int type2 = right.type;
-        int newType;
-        if (type1 == org.hotswap.agent.javassist.compiler.TokenId.LongConstant || type2 == org.hotswap.agent.javassist.compiler.TokenId.LongConstant)
-            newType = org.hotswap.agent.javassist.compiler.TokenId.LongConstant;
-        else if (type1 == org.hotswap.agent.javassist.compiler.TokenId.CharConstant
-                && type2 == org.hotswap.agent.javassist.compiler.TokenId.CharConstant)
-            newType = org.hotswap.agent.javassist.compiler.TokenId.CharConstant;
-        else
-            newType = org.hotswap.agent.javassist.compiler.TokenId.IntConstant;
+	private IntConst compute0(int op, IntConst right) {
+		int type1 = this.type;
+		int type2 = right.type;
+		int newType;
+		if (type1 == org.hotswap.agent.javassist.compiler.TokenId.LongConstant
+				|| type2 == org.hotswap.agent.javassist.compiler.TokenId.LongConstant) {
+			newType = org.hotswap.agent.javassist.compiler.TokenId.LongConstant;
+		} else if (type1 == org.hotswap.agent.javassist.compiler.TokenId.CharConstant
+				&& type2 == org.hotswap.agent.javassist.compiler.TokenId.CharConstant) {
+			newType = org.hotswap.agent.javassist.compiler.TokenId.CharConstant;
+		} else {
+			newType = org.hotswap.agent.javassist.compiler.TokenId.IntConstant;
+		}
 
-        long value1 = this.value;
-        long value2 = right.value;
-        long newValue;
-        switch (op) {
-            case '+':
-                newValue = value1 + value2;
-                break;
-            case '-':
-                newValue = value1 - value2;
-                break;
-            case '*':
-                newValue = value1 * value2;
-                break;
-            case '/':
-                newValue = value1 / value2;
-                break;
-            case '%':
-                newValue = value1 % value2;
-                break;
-            case '|':
-                newValue = value1 | value2;
-                break;
-            case '^':
-                newValue = value1 ^ value2;
-                break;
-            case '&':
-                newValue = value1 & value2;
-                break;
-            case org.hotswap.agent.javassist.compiler.TokenId.LSHIFT:
-                newValue = value << (int) value2;
-                newType = type1;
-                break;
-            case org.hotswap.agent.javassist.compiler.TokenId.RSHIFT:
-                newValue = value >> (int) value2;
-                newType = type1;
-                break;
-            case org.hotswap.agent.javassist.compiler.TokenId.ARSHIFT:
-                newValue = value >>> (int) value2;
-                newType = type1;
-                break;
-            default:
-                return null;
-        }
+		long value1 = this.value;
+		long value2 = right.value;
+		long newValue;
+		switch (op) {
+		case '+':
+			newValue = value1 + value2;
+			break;
+		case '-':
+			newValue = value1 - value2;
+			break;
+		case '*':
+			newValue = value1 * value2;
+			break;
+		case '/':
+			newValue = value1 / value2;
+			break;
+		case '%':
+			newValue = value1 % value2;
+			break;
+		case '|':
+			newValue = value1 | value2;
+			break;
+		case '^':
+			newValue = value1 ^ value2;
+			break;
+		case '&':
+			newValue = value1 & value2;
+			break;
+		case org.hotswap.agent.javassist.compiler.TokenId.LSHIFT:
+			newValue = value << (int) value2;
+			newType = type1;
+			break;
+		case org.hotswap.agent.javassist.compiler.TokenId.RSHIFT:
+			newValue = value >> (int) value2;
+			newType = type1;
+			break;
+		case org.hotswap.agent.javassist.compiler.TokenId.ARSHIFT:
+			newValue = value >>> (int) value2;
+			newType = type1;
+			break;
+		default:
+			return null;
+		}
 
-        return new IntConst(newValue, newType);
-    }
+		return new IntConst(newValue, newType);
+	}
 
-    private DoubleConst compute0(int op, DoubleConst right) {
-        double value1 = (double) this.value;
-        double value2 = right.value;
-        double newValue;
-        switch (op) {
-            case '+':
-                newValue = value1 + value2;
-                break;
-            case '-':
-                newValue = value1 - value2;
-                break;
-            case '*':
-                newValue = value1 * value2;
-                break;
-            case '/':
-                newValue = value1 / value2;
-                break;
-            case '%':
-                newValue = value1 % value2;
-                break;
-            default:
-                return null;
-        }
+	private DoubleConst compute0(int op, DoubleConst right) {
+		double value1 = this.value;
+		double value2 = right.value;
+		double newValue;
+		switch (op) {
+		case '+':
+			newValue = value1 + value2;
+			break;
+		case '-':
+			newValue = value1 - value2;
+			break;
+		case '*':
+			newValue = value1 * value2;
+			break;
+		case '/':
+			newValue = value1 / value2;
+			break;
+		case '%':
+			newValue = value1 % value2;
+			break;
+		default:
+			return null;
+		}
 
-        return new DoubleConst(newValue, right.type);
-    }
+		return new DoubleConst(newValue, right.type);
+	}
 }

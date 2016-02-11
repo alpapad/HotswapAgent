@@ -2,7 +2,6 @@ package org.hotswap.agent.plugin.hibernate.proxy;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.service.ServiceRegistry;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -17,7 +16,6 @@ public class SessionFactoryProxyTest {
     }};
 
     final SessionFactory sessionFactory = context.mock(SessionFactory.class);
-    final ServiceRegistry serviceRegistry = context.mock(ServiceRegistry.class);
     final Configuration configuration = context.mock(Configuration.class);
 
     //@Test
@@ -28,7 +26,7 @@ public class SessionFactoryProxyTest {
         }});
 
         SessionFactoryProxy wrapper = SessionFactoryProxy.getWrapper(configuration);
-        SessionFactory proxy = wrapper.proxy(sessionFactory, serviceRegistry);
+        SessionFactory proxy = wrapper.proxy(sessionFactory);
         proxy.getCurrentSession();
 
         context.assertIsSatisfied();

@@ -9,29 +9,29 @@ import org.hotswap.agent.logging.AgentLogger;
  * @author Jiri Bubnik
  */
 public class CommandExecutor extends Thread {
-    private static AgentLogger LOGGER = AgentLogger.getLogger(CommandExecutor.class);
+	private static AgentLogger LOGGER = AgentLogger.getLogger(CommandExecutor.class);
 
-    final Command command;
+	final Command command;
 
-    public CommandExecutor(Command command) {
-        this.command = command;
-        setDaemon(true);
-    }
+	public CommandExecutor(Command command) {
+		this.command = command;
+		setDaemon(true);
+	}
 
-    @Override
-    public void run() {
-        try {
-            LOGGER.trace("Executing command {}", command);
-            command.executeCommand();
-        } finally {
-            finished();
-        }
-    }
+	@Override
+	public void run() {
+		try {
+			LOGGER.trace("Executing command {}", command);
+			command.executeCommand();
+		} finally {
+			finished();
+		}
+	}
 
-    /**
-     * Method template to register finish event
-     */
-    public void finished() {
-    }
+	/**
+	 * Method template to register finish event
+	 */
+	public void finished() {
+	}
 
 }

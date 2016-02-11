@@ -20,21 +20,27 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Identifier.
  */
 public class Symbol extends ASTree {
-    protected String identifier;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	protected String identifier;
 
-    public Symbol(String sym) {
-        identifier = sym;
-    }
+	public Symbol(String sym) {
+		identifier = sym;
+	}
 
-    public String get() {
-        return identifier;
-    }
+	public String get() {
+		return identifier;
+	}
 
-    public String toString() {
-        return identifier;
-    }
+	@Override
+	public String toString() {
+		return identifier;
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atSymbol(this);
-    }
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atSymbol(this);
+	}
 }

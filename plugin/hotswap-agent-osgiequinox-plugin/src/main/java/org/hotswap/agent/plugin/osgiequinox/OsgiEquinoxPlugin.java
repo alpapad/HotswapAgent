@@ -147,9 +147,9 @@ public class OsgiEquinoxPlugin {
 
 
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void classReload(CtClass ctClass, Class original) {
+    public void classReload(CtClass ctClass, Class<?> original) {
 
-    	// Hotswap is realized by event listener in the RUNTIME mode
+    	// Hotswap is realized by event eventListener in the RUNTIME mode
     	if (!isDebugMode)
     		return;
 
@@ -186,7 +186,7 @@ public class OsgiEquinoxPlugin {
             for (int i=0; i < targetClassLoaders.size(); i++) {
             	classLoader = targetClassLoaders.get(i);
 
-                Class clazz  = classLoader.loadClass(ctClass.getName());
+                Class<?> clazz  = classLoader.loadClass(ctClass.getName());
 
                 if (putToReloadMap) {
                     synchronized (reloadMap) {

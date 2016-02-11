@@ -16,20 +16,26 @@
 
 package org.hotswap.agent.javassist.compiler;
 
-public final class KeywordTable extends java.util.HashMap {
-    public KeywordTable() {
-        super();
-    }
+public final class KeywordTable extends java.util.HashMap<String,Integer> {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public int lookup(String name) {
-        Object found = get(name);
-        if (found == null)
-            return -1;
-        else
-            return ((Integer) found).intValue();
-    }
+	public KeywordTable() {
+		super();
+	}
 
-    public void append(String name, int t) {
-        put(name, new Integer(t));
-    }
+	public int lookup(String name) {
+		Object found = get(name);
+		if (found == null) {
+			return -1;
+		} else {
+			return ((Integer) found).intValue();
+		}
+	}
+
+	public void append(String name, int t) {
+		put(name, new Integer(t));
+	}
 }

@@ -15,10 +15,10 @@
  */
 package org.hotswap.agent.javassist.bytecode.annotation;
 
-import org.hotswap.agent.javassist.bytecode.ConstPool;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
+
+import org.hotswap.agent.javassist.bytecode.ConstPool;
 
 /**
  * Boolean constant value.
@@ -27,77 +27,84 @@ import java.lang.reflect.Method;
  * @author Shigeru Chiba
  */
 public class BooleanMemberValue extends MemberValue {
-    int valueIndex;
+	int valueIndex;
 
-    /**
-     * Constructs a boolean constant value.  The initial value is specified
-     * by the constant pool entry at the given index.
-     *
-     * @param index the index of a CONSTANT_Integer_info structure.
-     */
-    public BooleanMemberValue(int index, ConstPool cp) {
-        super('Z', cp);
-        this.valueIndex = index;
-    }
+	/**
+	 * Constructs a boolean constant value. The initial value is specified by
+	 * the constant pool entry at the given index.
+	 *
+	 * @param index
+	 *            the index of a CONSTANT_Integer_info structure.
+	 */
+	public BooleanMemberValue(int index, ConstPool cp) {
+		super('Z', cp);
+		this.valueIndex = index;
+	}
 
-    /**
-     * Constructs a boolean constant value.
-     *
-     * @param b the initial value.
-     */
-    public BooleanMemberValue(boolean b, ConstPool cp) {
-        super('Z', cp);
-        setValue(b);
-    }
+	/**
+	 * Constructs a boolean constant value.
+	 *
+	 * @param b
+	 *            the initial value.
+	 */
+	public BooleanMemberValue(boolean b, ConstPool cp) {
+		super('Z', cp);
+		setValue(b);
+	}
 
-    /**
-     * Constructs a boolean constant value.  The initial value is false.
-     */
-    public BooleanMemberValue(ConstPool cp) {
-        super('Z', cp);
-        setValue(false);
-    }
+	/**
+	 * Constructs a boolean constant value. The initial value is false.
+	 */
+	public BooleanMemberValue(ConstPool cp) {
+		super('Z', cp);
+		setValue(false);
+	}
 
-    Object getValue(ClassLoader cl, org.hotswap.agent.javassist.ClassPool cp, Method m) {
-        return new Boolean(getValue());
-    }
+	@Override
+	Object getValue(ClassLoader cl, org.hotswap.agent.javassist.ClassPool cp, Method m) {
+		return new Boolean(getValue());
+	}
 
-    Class getType(ClassLoader cl) {
-        return boolean.class;
-    }
+	@Override
+	Class<?> getType(ClassLoader cl) {
+		return boolean.class;
+	}
 
-    /**
-     * Obtains the value of the member.
-     */
-    public boolean getValue() {
-        return cp.getIntegerInfo(valueIndex) != 0;
-    }
+	/**
+	 * Obtains the value of the member.
+	 */
+	public boolean getValue() {
+		return cp.getIntegerInfo(valueIndex) != 0;
+	}
 
-    /**
-     * Sets the value of the member.
-     */
-    public void setValue(boolean newValue) {
-        valueIndex = cp.addIntegerInfo(newValue ? 1 : 0);
-    }
+	/**
+	 * Sets the value of the member.
+	 */
+	public void setValue(boolean newValue) {
+		valueIndex = cp.addIntegerInfo(newValue ? 1 : 0);
+	}
 
-    /**
-     * Obtains the string representation of this object.
-     */
-    public String toString() {
-        return getValue() ? "true" : "false";
-    }
+	/**
+	 * Obtains the string representation of this object.
+	 */
+	@Override
+	public String toString() {
+		return getValue() ? "true" : "false";
+	}
 
-    /**
-     * Writes the value.
-     */
-    public void write(AnnotationsWriter writer) throws IOException {
-        writer.constValueIndex(getValue());
-    }
+	/**
+	 * Writes the value.
+	 */
+	@Override
+	public void write(AnnotationsWriter writer) throws IOException {
+		writer.constValueIndex(getValue());
+	}
 
-    /**
-     * Accepts a visitor.
-     */
-    public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
-        visitor.visitBooleanMemberValue(this);
-    }
+	/**
+	 * Accepts a visitor.
+	 */
+	@Override
+	public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
+		visitor.visitBooleanMemberValue(this);
+	}
 }

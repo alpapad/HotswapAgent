@@ -20,39 +20,46 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Conditional expression.
  */
 public class CondExpr extends ASTList {
-    public CondExpr(ASTree cond, ASTree thenp, ASTree elsep) {
-        super(cond, new ASTList(thenp, new ASTList(elsep)));
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public ASTree condExpr() {
-        return head();
-    }
+	public CondExpr(ASTree cond, ASTree thenp, ASTree elsep) {
+		super(cond, new ASTList(thenp, new ASTList(elsep)));
+	}
 
-    public void setCond(ASTree t) {
-        setHead(t);
-    }
+	public ASTree condExpr() {
+		return head();
+	}
 
-    public ASTree thenExpr() {
-        return tail().head();
-    }
+	public void setCond(ASTree t) {
+		setHead(t);
+	}
 
-    public void setThen(ASTree t) {
-        tail().setHead(t);
-    }
+	public ASTree thenExpr() {
+		return tail().head();
+	}
 
-    public ASTree elseExpr() {
-        return tail().tail().head();
-    }
+	public void setThen(ASTree t) {
+		tail().setHead(t);
+	}
 
-    public void setElse(ASTree t) {
-        tail().tail().setHead(t);
-    }
+	public ASTree elseExpr() {
+		return tail().tail().head();
+	}
 
-    public String getTag() {
-        return "?:";
-    }
+	public void setElse(ASTree t) {
+		tail().tail().setHead(t);
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atCondExpr(this);
-    }
+	@Override
+	public String getTag() {
+		return "?:";
+	}
+
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atCondExpr(this);
+	}
 }

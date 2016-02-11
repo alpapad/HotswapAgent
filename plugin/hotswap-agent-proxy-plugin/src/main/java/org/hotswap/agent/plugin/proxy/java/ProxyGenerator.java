@@ -59,6 +59,7 @@ import sun.security.action.GetBooleanAction;
  * @author Erki Ehtla
  * 
  */
+@SuppressWarnings("restriction")
 public class ProxyGenerator {
 	/*
 	 * In the comments below, "JVMS" refers to The Java Virtual Machine Specification Second Edition and "JLS" refers to
@@ -75,7 +76,7 @@ public class ProxyGenerator {
 	
 	/* constant pool tags */
 	private static final int CONSTANT_UTF8 = 1;
-	private static final int CONSTANT_UNICODE = 2;
+	//private static final int CONSTANT_UNICODE = 2;
 	private static final int CONSTANT_INTEGER = 3;
 	private static final int CONSTANT_FLOAT = 4;
 	private static final int CONSTANT_LONG = 5;
@@ -1596,6 +1597,7 @@ public class ProxyGenerator {
 		/**
 		 * Get or assign the index for a CONSTANT_Integer entry.
 		 */
+		@SuppressWarnings("unused")
 		public short getInteger(int i) {
 			return getValue(new Integer(i));
 		}
@@ -1603,6 +1605,7 @@ public class ProxyGenerator {
 		/**
 		 * Get or assign the index for a CONSTANT_Float entry.
 		 */
+		@SuppressWarnings("unused")
 		public short getFloat(float f) {
 			return getValue(new Float(f));
 		}

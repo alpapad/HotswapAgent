@@ -27,7 +27,8 @@ public class AnnotationProcessorTest {
     InitHandler initHandler = context.mock(InitHandler.class);
     OnClassLoadedHandler onClassLoadedHandler = context.mock(OnClassLoadedHandler.class);
 
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testProcess() throws Exception {
 
         context.checking(new Expectations() {{
@@ -52,7 +53,7 @@ public class AnnotationProcessorTest {
         annotationProcessor.addAnnotationHandler(Init.class, initHandler);
         annotationProcessor.addAnnotationHandler(OnClassLoadEvent.class, onClassLoadedHandler);
 
-        annotationProcessor.processAnnotations(new SimplePlugin());
+        annotationProcessor.processPluginInstanceAnnotations(new SimplePlugin(), null, null);
 
         context.assertIsSatisfied();
     }

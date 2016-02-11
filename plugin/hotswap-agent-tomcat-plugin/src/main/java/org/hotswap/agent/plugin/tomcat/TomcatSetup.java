@@ -1,15 +1,13 @@
 package org.hotswap.agent.plugin.tomcat;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.Arrays;
+
 import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
-
-import javax.naming.directory.DirContext;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Arrays;
 
 /**
  * Created by bubnik on 5.6.2014.
@@ -26,7 +24,7 @@ public class TomcatSetup {
         URL[] extraClassPath = (URL[]) PluginManagerInvoker.callPluginMethod(TomcatPlugin.class, originalClassLoader,
                 "getExtraClassPath", new Class[] {}, new Object[] {});
         System.err.println("extraClassPath =  " + Arrays.toString(extraClassPath));
-        LOGGER.debug("extraClassPath = {}", extraClassPath);
+        LOGGER.debug("extraClassPath = {}", Arrays.toString(extraClassPath));
 
 
         if (extraClassPath.length > 0) {

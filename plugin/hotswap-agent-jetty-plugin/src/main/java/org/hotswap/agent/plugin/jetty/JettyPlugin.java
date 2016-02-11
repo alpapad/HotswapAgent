@@ -123,10 +123,10 @@ public class JettyPlugin {
 
         // resolve jetty classes
         ClassLoader loader = contextHandler.getClass().getClassLoader();
-        Class contextHandlerClass;
-        Class resourceClass;
-        Class fileResourceClass;
-        Class resourceCollectionClass;
+        Class<?> contextHandlerClass;
+        Class<?> resourceClass;
+        Class<?> fileResourceClass;
+        Class<?> resourceCollectionClass;
 
         try {
             contextHandlerClass = loader.loadClass("org.eclipse.jetty.server.handler.ContextHandler");

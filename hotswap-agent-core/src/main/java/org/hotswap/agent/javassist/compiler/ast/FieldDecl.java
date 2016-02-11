@@ -17,23 +17,29 @@
 package org.hotswap.agent.javassist.compiler.ast;
 
 public class FieldDecl extends ASTList {
-    public FieldDecl(ASTree _head, ASTList _tail) {
-        super(_head, _tail);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public ASTList getModifiers() {
-        return (ASTList) getLeft();
-    }
+	public FieldDecl(ASTree _head, ASTList _tail) {
+		super(_head, _tail);
+	}
 
-    public Declarator getDeclarator() {
-        return (Declarator) tail().head();
-    }
+	public ASTList getModifiers() {
+		return (ASTList) getLeft();
+	}
 
-    public ASTree getInit() {
-        return (ASTree) sublist(2).head();
-    }
+	public Declarator getDeclarator() {
+		return (Declarator) tail().head();
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atFieldDecl(this);
-    }
+	public ASTree getInit() {
+		return sublist(2).head();
+	}
+
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atFieldDecl(this);
+	}
 }

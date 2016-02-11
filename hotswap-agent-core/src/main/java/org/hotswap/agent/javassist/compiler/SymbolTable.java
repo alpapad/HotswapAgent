@@ -16,35 +16,40 @@
 
 package org.hotswap.agent.javassist.compiler;
 
-import org.hotswap.agent.javassist.compiler.ast.Declarator;
-
 import java.util.HashMap;
 
-public final class SymbolTable extends HashMap {
-    private SymbolTable parent;
+import org.hotswap.agent.javassist.compiler.ast.Declarator;
 
-    public SymbolTable() {
-        this(null);
-    }
+public final class SymbolTable extends HashMap<String, Declarator> {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	private SymbolTable parent;
 
-    public SymbolTable(SymbolTable p) {
-        super();
-        parent = p;
-    }
+	public SymbolTable() {
+		this(null);
+	}
 
-    public SymbolTable getParent() {
-        return parent;
-    }
+	public SymbolTable(SymbolTable p) {
+		super();
+		parent = p;
+	}
 
-    public Declarator lookup(String name) {
-        Declarator found = (Declarator) get(name);
-        if (found == null && parent != null)
-            return parent.lookup(name);
-        else
-            return found;
-    }
+	public SymbolTable getParent() {
+		return parent;
+	}
 
-    public void append(String name, Declarator value) {
-        put(name, value);
-    }
+	public Declarator lookup(String name) {
+		Declarator found = (Declarator) get(name);
+		if (found == null && parent != null) {
+			return parent.lookup(name);
+		} else {
+			return found;
+		}
+	}
+
+	public void append(String name, Declarator value) {
+		put(name, value);
+	}
 }

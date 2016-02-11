@@ -69,8 +69,8 @@ public class RefreshDispatchersCommand extends MergeableCommand {
 
     private void reinitializeFilterDispatcher(FilterDispatcher filter) {
         try {
-            final FilterConfig config = (FilterConfig) ReflectionHelper.get(filter, ResteasyPlugin.FIELD_NAME);
-            final Set<String> doNoyClear = (Set<String>) ReflectionHelper.get(filter, ResteasyPlugin.PARAMETER_FIELD_NAME);
+            final FilterConfig config = ReflectionHelper.get(filter, ResteasyPlugin.FIELD_NAME);
+            final Set<String> doNoyClear = ReflectionHelper.get(filter, ResteasyPlugin.PARAMETER_FIELD_NAME);
             clearContext(config.getServletContext(), doNoyClear);
             filter.destroy();
             filter.init(config);
@@ -81,8 +81,8 @@ public class RefreshDispatchersCommand extends MergeableCommand {
 
     private void reinitializeServletDispatcher(HttpServletDispatcher servlet) {
         try {
-            final ServletConfig config = (ServletConfig) ReflectionHelper.get(servlet, ResteasyPlugin.FIELD_NAME);
-            final Set<String> doNoyClear = (Set<String>) ReflectionHelper.get(servlet, ResteasyPlugin.PARAMETER_FIELD_NAME);
+            final ServletConfig config = ReflectionHelper.get(servlet, ResteasyPlugin.FIELD_NAME);
+            final Set<String> doNoyClear = ReflectionHelper.get(servlet, ResteasyPlugin.PARAMETER_FIELD_NAME);
             clearContext(config.getServletContext(), doNoyClear);
             servlet.destroy();
             servlet.init(config);
@@ -97,9 +97,10 @@ public class RefreshDispatchersCommand extends MergeableCommand {
      * @param servletContext
      */
     private void clearContext(final ServletContext servletContext, final Set<String> doNotClear) {
-        final Enumeration names = servletContext.getAttributeNames();
+        final Enumeration<String> names = servletContext.getAttributeNames();
         while (names.hasMoreElements()) {
-            final String name = names.nextElement().toString();
+            final String name = names.nextElement();
+            System.err.println("Clearing:" + name);
             if (name.startsWith("org.jboss.resteasy") && !doNotClear.contains(name)) {
                 servletContext.removeAttribute(name);
             }

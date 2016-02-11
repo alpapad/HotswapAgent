@@ -36,9 +36,9 @@ public class ResteasyContextParams {
             return existing;
         }
         final Set<String> ret = new HashSet<String>();
-        Enumeration names = context.getAttributeNames();
+        Enumeration<String> names = context.getAttributeNames();
         while (names.hasMoreElements()) {
-            ret.add((String) names.nextElement());
+            ret.add(names.nextElement());
         }
         return ret;
     }

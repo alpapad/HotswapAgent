@@ -21,7 +21,8 @@ import static org.junit.Assert.assertNull;
  */
 public class ExtraPathResourceClassLoaderTest {
 
-    @Test
+    @SuppressWarnings("resource")
+	@Test
     public void testGetResource() throws Exception {
         // create arbitrary test file in a temp directory
         final Path directory = Files.createTempDirectory(ExtraPathResourceClassLoaderTest.class.getName());

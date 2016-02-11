@@ -19,7 +19,7 @@ public class AgentLoggerTest {
 
     @Test
     public void testDefaultLevel() throws Exception {
-        final Class clazz = SimplePlugin.class;
+        final Class<?> clazz = SimplePlugin.class;
         final String message = "Test";
         final Throwable error = new Throwable();
         AgentLogger.setHandler(handler);

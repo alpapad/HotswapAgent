@@ -25,7 +25,12 @@ import org.hotswap.agent.javassist.CannotCompileException;
  * @see ClassFile#addField(FieldInfo)
  */
 public class DuplicateMemberException extends CannotCompileException {
-    public DuplicateMemberException(String msg) {
-        super(msg);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public DuplicateMemberException(String msg) {
+		super(msg);
+	}
 }

@@ -30,7 +30,7 @@ public class ResetSpringStaticCaches {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("singletonBeanNamesByType");
             field.setAccessible(true);
             // noinspection unchecked
-            Map singletonBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
+            Map<?,?> singletonBeanNamesByType = (Map<?,?>) field.get(defaultListableBeanFactory);
             singletonBeanNamesByType.clear();
         } catch (Exception e) {
             LOGGER.trace("Unable to clear DefaultListableBeanFactory.singletonBeanNamesByType cache (is Ok for pre 3.1.2 Spring version)", e);
@@ -40,7 +40,7 @@ public class ResetSpringStaticCaches {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("allBeanNamesByType");
             field.setAccessible(true);
             // noinspection unchecked
-            Map allBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
+            Map<?,?> allBeanNamesByType = (Map<?,?>) field.get(defaultListableBeanFactory);
             allBeanNamesByType.clear();
         } catch (Exception e) {
             LOGGER.trace("Unable to clear allBeanNamesByType cache (is Ok for pre 3.2 Spring version)");
@@ -50,7 +50,7 @@ public class ResetSpringStaticCaches {
             Field field = DefaultListableBeanFactory.class.getDeclaredField("nonSingletonBeanNamesByType");
             field.setAccessible(true);
             // noinspection unchecked
-            Map nonSingletonBeanNamesByType = (Map) field.get(defaultListableBeanFactory);
+            Map<?,?> nonSingletonBeanNamesByType = (Map<?,?>) field.get(defaultListableBeanFactory);
             nonSingletonBeanNamesByType.clear();
         } catch (Exception e) {
             LOGGER.debug("Unable to clear nonSingletonBeanNamesByType cache (is Ok for pre 3.2 Spring version)");
@@ -74,7 +74,8 @@ public class ResetSpringStaticCaches {
             Field field = GenericTypeResolver.class.getDeclaredField("typeVariableCache");
             field.setAccessible(true);
             // noinspection unchecked
-            Map<Class, Map> typeVariableCache = (Map<Class, Map>) field.get(null);
+            @SuppressWarnings("unchecked")
+			Map<Class<?>, Map<?,?>> typeVariableCache = (Map<Class<?>, Map<?,?>>) field.get(null);
             typeVariableCache.clear();
             LOGGER.trace("Cache cleared: GenericTypeResolver.typeVariableCache");
         } catch (Exception e) {
@@ -83,7 +84,7 @@ public class ResetSpringStaticCaches {
     }
 
     private static void resetReflectionUtilsCache() {
-        Map declaredMethodsCache = (Map) ReflectionHelper.getNoException(null, ReflectionUtils.class, "declaredMethodsCache");
+    	Map<?,?> declaredMethodsCache = (Map<?,?>) ReflectionHelper.getNoException(null, ReflectionUtils.class, "declaredMethodsCache");
         if (declaredMethodsCache != null) {
             declaredMethodsCache.clear();
             LOGGER.trace("Cache cleared: ReflectionUtils.declaredMethodsCache");
@@ -93,7 +94,7 @@ public class ResetSpringStaticCaches {
     }
 
     private static void resetAnnotationUtilsCache() {
-        Map annotatedInterfaceCache = (Map) ReflectionHelper.getNoException(null, AnnotationUtils.class, "annotatedInterfaceCache");
+    	Map<?,?> annotatedInterfaceCache = (Map<?,?>) ReflectionHelper.getNoException(null, AnnotationUtils.class, "annotatedInterfaceCache");
         if (annotatedInterfaceCache != null) {
             annotatedInterfaceCache.clear();
             LOGGER.trace("Cache cleared: AnnotationUtils.annotatedInterfaceCache");
@@ -101,7 +102,7 @@ public class ResetSpringStaticCaches {
             LOGGER.trace("Cache NOT cleared: AnnotationUtils.annotatedInterfaceCache not exists in target Spring verion (pre 3.1.x)");
         }
         
-        Map findAnnotationCache = (Map) ReflectionHelper.getNoException(null, AnnotationUtils.class, "findAnnotationCache");
+        Map<?,?> findAnnotationCache = (Map<?,?>) ReflectionHelper.getNoException(null, AnnotationUtils.class, "findAnnotationCache");
         if (findAnnotationCache != null) {
             findAnnotationCache.clear();
             LOGGER.trace("Cache cleared: AnnotationUtils.findAnnotationCache");
@@ -114,7 +115,7 @@ public class ResetSpringStaticCaches {
     private static void resetPropetyCache() {
         try {
             ClassLoader classLoader = ResetSpringStaticCaches.class.getClassLoader();
-            Map annotationCache = (Map) ReflectionHelper.get(null,
+            Map<?,?> annotationCache = (Map<?,?>) ReflectionHelper.get(null,
                     classLoader.loadClass("org.springframework.core.convert.Property"), "annotationCache");
             annotationCache.clear();
             LOGGER.trace("Cache cleared: Property.annotationCache");

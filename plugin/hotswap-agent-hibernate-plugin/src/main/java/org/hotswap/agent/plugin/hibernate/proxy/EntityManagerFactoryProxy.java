@@ -1,19 +1,20 @@
 package org.hotswap.agent.plugin.hibernate.proxy;
 
-import org.hibernate.Version;
-import org.hotswap.agent.javassist.compiler.ast.StringL;
-import org.hotswap.agent.logging.AgentLogger;
-import org.hotswap.agent.util.ReflectionHelper;
-
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.spi.PersistenceUnitInfo;
+
+import org.hibernate.Version;
+import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.util.ReflectionHelper;
 
 /**
  * Create a proxy for EntityManagerFactory and register all created proxies.
@@ -34,7 +35,7 @@ public class EntityManagerFactoryProxy {
     // info and properties to use to build fresh instance of factory
     String persistenceUnitName;
     PersistenceUnitInfo info;
-    Map properties;
+    Map<?,?> properties;
 
     /**
      * Create new wrapper for persistenceUnitName and hold it's instance for future use.
@@ -58,7 +59,7 @@ public class EntityManagerFactoryProxy {
         try {
             version43OrGreater = Integer.valueOf(version[0]) >= 4 && Integer.valueOf(version[1]) >= 3;
         } catch (Exception e) {
-            LOGGER.warning("Unable to resolve hibernate version '{}'", version);
+            LOGGER.warning("Unable to resolve hibernate version '{}'", Arrays.toString(version));
         }
 
         for (EntityManagerFactoryProxy wrapper : proxiedFactories.values())
@@ -81,8 +82,8 @@ public class EntityManagerFactoryProxy {
             currentInstance = Persistence.createEntityManagerFactory(persistenceUnitName, properties);
         } else {
             try {
-                Class bootstrapClazz = loadClass("org.hibernate.jpa.boot.spi.Bootstrap");
-                Class builderClazz = loadClass("org.hibernate.jpa.boot.spi.EntityManagerFactoryBuilder");
+                Class<?> bootstrapClazz = loadClass("org.hibernate.jpa.boot.spi.Bootstrap");
+                Class<?> builderClazz = loadClass("org.hibernate.jpa.boot.spi.EntityManagerFactoryBuilder");
 
                 Object builder = ReflectionHelper.invoke(null, bootstrapClazz, "getEntityManagerFactoryBuilder",
                         new Class[]{PersistenceUnitInfo.class, Map.class}, info, properties);
@@ -102,7 +103,7 @@ public class EntityManagerFactoryProxy {
     public void refreshProxiedFactory() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         // refresh registry
         try {
-            Class entityManagerFactoryRegistryClazz = loadClass("org.hibernate.ejb.internal.EntityManagerFactoryRegistry");
+            Class<?> entityManagerFactoryRegistryClazz = loadClass("org.hibernate.ejb.internal.EntityManagerFactoryRegistry");
             Object instance = ReflectionHelper.get(null, entityManagerFactoryRegistryClazz, "INSTANCE");
             ReflectionHelper.invoke(instance, entityManagerFactoryRegistryClazz, "removeEntityManagerFactory",
                     new Class[] {String.class, EntityManagerFactory.class}, persistenceUnitName, currentInstance);
@@ -118,7 +119,7 @@ public class EntityManagerFactoryProxy {
     // from HibernatePersistence.createContainerEntityManagerFactory()
     private void buildFreshEntityManagerFactory() {
         try {
-            Class ejb3ConfigurationClazz = loadClass("org.hibernate.ejb.Ejb3Configuration");
+            Class<?> ejb3ConfigurationClazz = loadClass("org.hibernate.ejb.Ejb3Configuration");
             LOGGER.trace("new Ejb3Configuration()");
             Object cfg = ejb3ConfigurationClazz.newInstance();
 
@@ -152,7 +153,7 @@ public class EntityManagerFactoryProxy {
      * @return the proxy
      */
     public EntityManagerFactory proxy(EntityManagerFactory factory, String persistenceUnitName,
-                                      PersistenceUnitInfo info, Map properties) {
+                                      PersistenceUnitInfo info, Map<?,?> properties) {
         this.currentInstance = factory;
         this.persistenceUnitName = persistenceUnitName;
         this.info = info;
@@ -171,7 +172,7 @@ public class EntityManagerFactoryProxy {
                 });
     }
 
-    private Class loadClass(String name) throws ClassNotFoundException {
+    private Class<?> loadClass(String name) throws ClassNotFoundException {
         return getClass().getClassLoader().loadClass(name);
     }
 }

@@ -10,6 +10,7 @@ import sun.misc.ProxyGenerator;
  * @author Erki Ehtla
  * 
  */
+@SuppressWarnings("restriction")
 public class JavaProxyBytecodeGenerator implements ProxyBytecodeGenerator {
 	private Class<?> classBeingRedefined;
 	

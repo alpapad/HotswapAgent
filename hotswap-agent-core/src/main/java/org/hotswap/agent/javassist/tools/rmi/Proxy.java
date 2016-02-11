@@ -22,5 +22,5 @@ package org.hotswap.agent.javassist.tools.rmi;
  * @see StubGenerator
  */
 public interface Proxy {
-    int _getObjectId();
+	int _getObjectId();
 }

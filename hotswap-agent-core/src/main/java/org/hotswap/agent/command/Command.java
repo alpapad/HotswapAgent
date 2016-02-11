@@ -9,8 +9,8 @@ package org.hotswap.agent.command;
  */
 public interface Command {
 
-    /**
-     * Execute the command.
-     */
-    public void executeCommand();
+	/**
+	 * Execute the command.
+	 */
+	public void executeCommand();
 }

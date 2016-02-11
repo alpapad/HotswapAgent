@@ -22,187 +22,200 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hotswap.agent.javassist.bytecode.annotation.Annotation;
+
 /**
  * A class representing <code>RuntimeVisibleAnnotations_attribute</code> and
  * <code>RuntimeInvisibleAnnotations_attribute</code>.
  * <p/>
- * <p>To obtain an ParameterAnnotationAttribute object, invoke
- * <code>getAttribute(ParameterAnnotationsAttribute.invisibleTag)</code>
- * in <code>MethodInfo</code>.
- * The obtained attribute is a
- * runtime invisible annotations attribute.
- * If the parameter is
+ * <p>
+ * To obtain an ParameterAnnotationAttribute object, invoke
+ * <code>getAttribute(ParameterAnnotationsAttribute.invisibleTag)</code> in
+ * <code>MethodInfo</code>. The obtained attribute is a runtime invisible
+ * annotations attribute. If the parameter is
  * <code>ParameterAnnotationAttribute.visibleTag</code>, then the obtained
  * attribute is a runtime visible one.
  */
 public class ParameterAnnotationsAttribute extends AttributeInfo {
-    /**
-     * The name of the <code>RuntimeVisibleParameterAnnotations</code>
-     * attribute.
-     */
-    public static final String visibleTag
-            = "RuntimeVisibleParameterAnnotations";
+	/**
+	 * The name of the <code>RuntimeVisibleParameterAnnotations</code>
+	 * attribute.
+	 */
+	public static final String visibleTag = "RuntimeVisibleParameterAnnotations";
 
-    /**
-     * The name of the <code>RuntimeInvisibleParameterAnnotations</code>
-     * attribute.
-     */
-    public static final String invisibleTag
-            = "RuntimeInvisibleParameterAnnotations";
+	/**
+	 * The name of the <code>RuntimeInvisibleParameterAnnotations</code>
+	 * attribute.
+	 */
+	public static final String invisibleTag = "RuntimeInvisibleParameterAnnotations";
 
-    /**
-     * Constructs
-     * a <code>Runtime(In)VisibleParameterAnnotations_attribute</code>.
-     *
-     * @param cp       constant pool
-     * @param attrname attribute name (<code>visibleTag</code> or
-     *                 <code>invisibleTag</code>).
-     * @param info     the contents of this attribute.  It does not
-     *                 include <code>attribute_name_index</code> or
-     *                 <code>attribute_length</code>.
-     */
-    public ParameterAnnotationsAttribute(ConstPool cp, String attrname,
-                                         byte[] info) {
-        super(cp, attrname, info);
-    }
+	/**
+	 * Constructs a
+	 * <code>Runtime(In)VisibleParameterAnnotations_attribute</code>.
+	 *
+	 * @param cp
+	 *            constant pool
+	 * @param attrname
+	 *            attribute name (<code>visibleTag</code> or
+	 *            <code>invisibleTag</code>).
+	 * @param info
+	 *            the contents of this attribute. It does not include
+	 *            <code>attribute_name_index</code> or
+	 *            <code>attribute_length</code>.
+	 */
+	public ParameterAnnotationsAttribute(ConstPool cp, String attrname, byte[] info) {
+		super(cp, attrname, info);
+	}
 
-    /**
-     * Constructs an empty
-     * <code>Runtime(In)VisibleParameterAnnotations_attribute</code>.
-     * A new annotation can be later added to the created attribute
-     * by <code>setAnnotations()</code>.
-     *
-     * @param cp       constant pool
-     * @param attrname attribute name (<code>visibleTag</code> or
-     *                 <code>invisibleTag</code>).
-     * @see #setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][])
-     */
-    public ParameterAnnotationsAttribute(ConstPool cp, String attrname) {
-        this(cp, attrname, new byte[]{0});
-    }
+	/**
+	 * Constructs an empty
+	 * <code>Runtime(In)VisibleParameterAnnotations_attribute</code>. A new
+	 * annotation can be later added to the created attribute by
+	 * <code>setAnnotations()</code>.
+	 *
+	 * @param cp
+	 *            constant pool
+	 * @param attrname
+	 *            attribute name (<code>visibleTag</code> or
+	 *            <code>invisibleTag</code>).
+	 * @see #setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][])
+	 */
+	public ParameterAnnotationsAttribute(ConstPool cp, String attrname) {
+		this(cp, attrname, new byte[] { 0 });
+	}
 
-    /**
-     * @param n the attribute name.
-     */
-    ParameterAnnotationsAttribute(ConstPool cp, int n, DataInputStream in)
-            throws IOException {
-        super(cp, n, in);
-    }
+	/**
+	 * @param n
+	 *            the attribute name.
+	 */
+	ParameterAnnotationsAttribute(ConstPool cp, int n, DataInputStream in) throws IOException {
+		super(cp, n, in);
+	}
 
-    /**
-     * Returns <code>num_parameters</code>.
-     */
-    public int numParameters() {
-        return info[0] & 0xff;
-    }
+	/**
+	 * Returns <code>num_parameters</code>.
+	 */
+	public int numParameters() {
+		return info[0] & 0xff;
+	}
 
-    /**
-     * Copies this attribute and returns a new copy.
-     */
-    public AttributeInfo copy(ConstPool newCp, Map classnames) {
-        AnnotationsAttribute.Copier copier = new AnnotationsAttribute.Copier(info, constPool, newCp, classnames);
-        try {
-            copier.parameters();
-            return new ParameterAnnotationsAttribute(newCp, getName(),
-                    copier.close());
-        } catch (Exception e) {
-            throw new RuntimeException(e.toString());
-        }
-    }
+	/**
+	 * Copies this attribute and returns a new copy.
+	 */
+	@Override
+	public AttributeInfo copy(ConstPool newCp, Map<String, String> classnames) {
+		AnnotationsAttribute.Copier copier = new AnnotationsAttribute.Copier(info, constPool, newCp, classnames);
+		try {
+			copier.parameters();
+			return new ParameterAnnotationsAttribute(newCp, getName(), copier.close());
+		} catch (Exception e) {
+			throw new RuntimeException(e.toString());
+		}
+	}
 
-    /**
-     * Parses the annotations and returns a data structure representing
-     * that parsed annotations.  Note that changes of the node values of the
-     * returned tree are not reflected on the annotations represented by
-     * this object unless the tree is copied back to this object by
-     * <code>setAnnotations()</code>.
-     *
-     * @return Each element of the returned array represents an array of
-     * annotations that are associated with each method parameter.
-     * @see #setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][])
-     */
-    public org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] getAnnotations() {
-        try {
-            return new AnnotationsAttribute.Parser(info, constPool).parseParameters();
-        } catch (Exception e) {
-            throw new RuntimeException(e.toString());
-        }
-    }
+	/**
+	 * Parses the annotations and returns a data structure representing that
+	 * parsed annotations. Note that changes of the node values of the returned
+	 * tree are not reflected on the annotations represented by this object
+	 * unless the tree is copied back to this object by
+	 * <code>setAnnotations()</code>.
+	 *
+	 * @return Each element of the returned array represents an array of
+	 *         annotations that are associated with each method parameter.
+	 * @see #setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][])
+	 */
+	public org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] getAnnotations() {
+		try {
+			return new AnnotationsAttribute.Parser(info, constPool).parseParameters();
+		} catch (Exception e) {
+			throw new RuntimeException(e.toString());
+		}
+	}
 
-    /**
-     * Changes the annotations represented by this object according to
-     * the given array of <code>Annotation</code> objects.
-     *
-     * @param params the data structure representing the
-     *               new annotations. Every element of this array
-     *               is an array of <code>Annotation</code> and
-     *               it represens annotations of each method parameter.
-     */
-    public void setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] params) {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        org.hotswap.agent.javassist.bytecode.annotation.AnnotationsWriter writer = new org.hotswap.agent.javassist.bytecode.annotation.AnnotationsWriter(output, constPool);
-        try {
-            int n = params.length;
-            writer.numParameters(n);
-            for (int i = 0; i < n; ++i) {
-                org.hotswap.agent.javassist.bytecode.annotation.Annotation[] anno = params[i];
-                writer.numAnnotations(anno.length);
-                for (int j = 0; j < anno.length; ++j)
-                    anno[j].write(writer);
-            }
+	/**
+	 * Changes the annotations represented by this object according to the given
+	 * array of <code>Annotation</code> objects.
+	 *
+	 * @param params
+	 *            the data structure representing the new annotations. Every
+	 *            element of this array is an array of <code>Annotation</code>
+	 *            and it represens annotations of each method parameter.
+	 */
+	public void setAnnotations(org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] params) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		org.hotswap.agent.javassist.bytecode.annotation.AnnotationsWriter writer = new org.hotswap.agent.javassist.bytecode.annotation.AnnotationsWriter(
+				output, constPool);
+		try {
+			int n = params.length;
+			writer.numParameters(n);
+			for (int i = 0; i < n; ++i) {
+				org.hotswap.agent.javassist.bytecode.annotation.Annotation[] anno = params[i];
+				writer.numAnnotations(anno.length);
+				for (Annotation element : anno) {
+					element.write(writer);
+				}
+			}
 
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);      // should never reach here.
-        }
+			writer.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e); // should never reach here.
+		}
 
-        set(output.toByteArray());
-    }
+		set(output.toByteArray());
+	}
 
-    /**
-     * @param oldname a JVM class name.
-     * @param newname a JVM class name.
-     */
-    void renameClass(String oldname, String newname) {
-        HashMap map = new HashMap();
-        map.put(oldname, newname);
-        renameClass(map);
-    }
+	/**
+	 * @param oldname
+	 *            a JVM class name.
+	 * @param newname
+	 *            a JVM class name.
+	 */
+	@Override
+	void renameClass(String oldname, String newname) {
+		HashMap<String, String> map = new HashMap<String, String>();
+		map.put(oldname, newname);
+		renameClass(map);
+	}
 
-    void renameClass(Map classnames) {
-        AnnotationsAttribute.Renamer renamer = new AnnotationsAttribute.Renamer(info, getConstPool(), classnames);
-        try {
-            renamer.parameters();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+	@Override
+	void renameClass(Map<String, String> classnames) {
+		AnnotationsAttribute.Renamer renamer = new AnnotationsAttribute.Renamer(info, getConstPool(), classnames);
+		try {
+			renamer.parameters();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-    void getRefClasses(Map classnames) {
-        renameClass(classnames);
-    }
+	@Override
+	void getRefClasses(Map<String, String> classnames) {
+		renameClass(classnames);
+	}
 
-    /**
-     * Returns a string representation of this object.
-     */
-    public String toString() {
-        org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] aa = getAnnotations();
-        StringBuilder sbuf = new StringBuilder();
-        int k = 0;
-        while (k < aa.length) {
-            org.hotswap.agent.javassist.bytecode.annotation.Annotation[] a = aa[k++];
-            int i = 0;
-            while (i < a.length) {
-                sbuf.append(a[i++].toString());
-                if (i != a.length)
-                    sbuf.append(" ");
-            }
+	/**
+	 * Returns a string representation of this object.
+	 */
+	@Override
+	public String toString() {
+		org.hotswap.agent.javassist.bytecode.annotation.Annotation[][] aa = getAnnotations();
+		StringBuilder sbuf = new StringBuilder();
+		int k = 0;
+		while (k < aa.length) {
+			org.hotswap.agent.javassist.bytecode.annotation.Annotation[] a = aa[k++];
+			int i = 0;
+			while (i < a.length) {
+				sbuf.append(a[i++].toString());
+				if (i != a.length) {
+					sbuf.append(" ");
+				}
+			}
 
-            if (k != aa.length)
-                sbuf.append(", ");
-        }
+			if (k != aa.length) {
+				sbuf.append(", ");
+			}
+		}
 
-        return sbuf.toString();
+		return sbuf.toString();
 
-    }
+	}
 }

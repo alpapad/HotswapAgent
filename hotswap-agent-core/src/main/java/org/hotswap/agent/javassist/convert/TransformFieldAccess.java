@@ -17,59 +17,59 @@
 package org.hotswap.agent.javassist.convert;
 
 final public class TransformFieldAccess extends Transformer {
-    private String newClassname, newFieldname;
-    private String fieldname;
-    private org.hotswap.agent.javassist.CtClass fieldClass;
-    private boolean isPrivate;
+	private String newClassname, newFieldname;
+	private String fieldname;
+	private org.hotswap.agent.javassist.CtClass fieldClass;
+	private boolean isPrivate;
 
-    /* cache */
-    private int newIndex;
-    private org.hotswap.agent.javassist.bytecode.ConstPool constPool;
+	/* cache */
+	private int newIndex;
+	private org.hotswap.agent.javassist.bytecode.ConstPool constPool;
 
-    public TransformFieldAccess(Transformer next, org.hotswap.agent.javassist.CtField field,
-                                String newClassname, String newFieldname) {
-        super(next);
-        this.fieldClass = field.getDeclaringClass();
-        this.fieldname = field.getName();
-        this.isPrivate = org.hotswap.agent.javassist.Modifier.isPrivate(field.getModifiers());
-        this.newClassname = newClassname;
-        this.newFieldname = newFieldname;
-        this.constPool = null;
-    }
+	public TransformFieldAccess(Transformer next, org.hotswap.agent.javassist.CtField field, String newClassname,
+			String newFieldname) {
+		super(next);
+		this.fieldClass = field.getDeclaringClass();
+		this.fieldname = field.getName();
+		this.isPrivate = org.hotswap.agent.javassist.Modifier.isPrivate(field.getModifiers());
+		this.newClassname = newClassname;
+		this.newFieldname = newFieldname;
+		this.constPool = null;
+	}
 
-    public void initialize(org.hotswap.agent.javassist.bytecode.ConstPool cp, org.hotswap.agent.javassist.bytecode.CodeAttribute attr) {
-        if (constPool != cp)
-            newIndex = 0;
-    }
+	@Override
+	public void initialize(org.hotswap.agent.javassist.bytecode.ConstPool cp,
+			org.hotswap.agent.javassist.bytecode.CodeAttribute attr) {
+		if (constPool != cp) {
+			newIndex = 0;
+		}
+	}
 
-    /**
-     * Modify GETFIELD, GETSTATIC, PUTFIELD, and PUTSTATIC so that
-     * a different field is accessed.  The new field must be declared
-     * in a superclass of the class in which the original field is
-     * declared.
-     */
-    public int transform(org.hotswap.agent.javassist.CtClass clazz, int pos,
-                         org.hotswap.agent.javassist.bytecode.CodeIterator iterator, org.hotswap.agent.javassist.bytecode.ConstPool cp) {
-        int c = iterator.byteAt(pos);
-        if (c == GETFIELD || c == GETSTATIC
-                || c == PUTFIELD || c == PUTSTATIC) {
-            int index = iterator.u16bitAt(pos + 1);
-            String typedesc
-                    = TransformReadField.isField(clazz.getClassPool(), cp,
-                    fieldClass, fieldname, isPrivate, index);
-            if (typedesc != null) {
-                if (newIndex == 0) {
-                    int nt = cp.addNameAndTypeInfo(newFieldname,
-                            typedesc);
-                    newIndex = cp.addFieldrefInfo(
-                            cp.addClassInfo(newClassname), nt);
-                    constPool = cp;
-                }
+	/**
+	 * Modify GETFIELD, GETSTATIC, PUTFIELD, and PUTSTATIC so that a different
+	 * field is accessed. The new field must be declared in a superclass of the
+	 * class in which the original field is declared.
+	 */
+	@Override
+	public int transform(org.hotswap.agent.javassist.CtClass clazz, int pos,
+			org.hotswap.agent.javassist.bytecode.CodeIterator iterator,
+			org.hotswap.agent.javassist.bytecode.ConstPool cp) {
+		int c = iterator.byteAt(pos);
+		if (c == GETFIELD || c == GETSTATIC || c == PUTFIELD || c == PUTSTATIC) {
+			int index = iterator.u16bitAt(pos + 1);
+			String typedesc = TransformReadField.isField(clazz.getClassPool(), cp, fieldClass, fieldname, isPrivate,
+					index);
+			if (typedesc != null) {
+				if (newIndex == 0) {
+					int nt = cp.addNameAndTypeInfo(newFieldname, typedesc);
+					newIndex = cp.addFieldrefInfo(cp.addClassInfo(newClassname), nt);
+					constPool = cp;
+				}
 
-                iterator.write16bit(newIndex, pos + 1);
-            }
-        }
+				iterator.write16bit(newIndex, pos + 1);
+			}
+		}
 
-        return pos;
-    }
+		return pos;
+	}
 }

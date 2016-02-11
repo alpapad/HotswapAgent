@@ -19,44 +19,54 @@ package org.hotswap.agent.javassist.compiler.ast;
 import org.hotswap.agent.javassist.compiler.CompileError;
 
 /**
- * A node of a a binary tree.  This class provides concrete methods
- * overriding abstract methods in ASTree.
+ * A node of a a binary tree. This class provides concrete methods overriding
+ * abstract methods in ASTree.
  */
 public class Pair extends ASTree {
-    protected ASTree left, right;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	protected ASTree left, right;
 
-    public Pair(ASTree _left, ASTree _right) {
-        left = _left;
-        right = _right;
-    }
+	public Pair(ASTree _left, ASTree _right) {
+		left = _left;
+		right = _right;
+	}
 
-    public void accept(Visitor v) throws CompileError {
-        v.atPair(this);
-    }
+	@Override
+	public void accept(Visitor v) throws CompileError {
+		v.atPair(this);
+	}
 
-    public String toString() {
-        StringBuffer sbuf = new StringBuffer();
-        sbuf.append("(<Pair> ");
-        sbuf.append(left == null ? "<null>" : left.toString());
-        sbuf.append(" . ");
-        sbuf.append(right == null ? "<null>" : right.toString());
-        sbuf.append(')');
-        return sbuf.toString();
-    }
+	@Override
+	public String toString() {
+		StringBuffer sbuf = new StringBuffer();
+		sbuf.append("(<Pair> ");
+		sbuf.append(left == null ? "<null>" : left.toString());
+		sbuf.append(" . ");
+		sbuf.append(right == null ? "<null>" : right.toString());
+		sbuf.append(')');
+		return sbuf.toString();
+	}
 
-    public ASTree getLeft() {
-        return left;
-    }
+	@Override
+	public ASTree getLeft() {
+		return left;
+	}
 
-    public ASTree getRight() {
-        return right;
-    }
+	@Override
+	public ASTree getRight() {
+		return right;
+	}
 
-    public void setLeft(ASTree _left) {
-        left = _left;
-    }
+	@Override
+	public void setLeft(ASTree _left) {
+		left = _left;
+	}
 
-    public void setRight(ASTree _right) {
-        right = _right;
-    }
+	@Override
+	public void setRight(ASTree _right) {
+		right = _right;
+	}
 }

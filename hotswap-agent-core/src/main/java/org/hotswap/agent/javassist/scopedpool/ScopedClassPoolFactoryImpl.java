@@ -23,19 +23,21 @@ package org.hotswap.agent.javassist.scopedpool;
  * @version $Revision: 1.5 $
  */
 public class ScopedClassPoolFactoryImpl implements ScopedClassPoolFactory {
-    /**
-     * Makes an instance.
-     */
-    public ScopedClassPool create(ClassLoader cl, org.hotswap.agent.javassist.ClassPool src,
-                                  org.hotswap.agent.javassist.scopedpool.ScopedClassPoolRepository repository) {
-        return new ScopedClassPool(cl, src, repository, false);
-    }
+	/**
+	 * Makes an instance.
+	 */
+	@Override
+	public ScopedClassPool create(ClassLoader cl, org.hotswap.agent.javassist.ClassPool src,
+			org.hotswap.agent.javassist.scopedpool.ScopedClassPoolRepository repository) {
+		return new ScopedClassPool(cl, src, repository, false);
+	}
 
-    /**
-     * Makes an instance.
-     */
-    public ScopedClassPool create(org.hotswap.agent.javassist.ClassPool src,
-                                  org.hotswap.agent.javassist.scopedpool.ScopedClassPoolRepository repository) {
-        return new ScopedClassPool(null, src, repository, true);
-    }
+	/**
+	 * Makes an instance.
+	 */
+	@Override
+	public ScopedClassPool create(org.hotswap.agent.javassist.ClassPool src,
+			org.hotswap.agent.javassist.scopedpool.ScopedClassPoolRepository repository) {
+		return new ScopedClassPool(null, src, repository, true);
+	}
 }

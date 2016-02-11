@@ -1,11 +1,10 @@
 package org.hotswap.agent.watch.nio;
 
-
-import org.hotswap.agent.annotation.FileEvent;
-import org.hotswap.agent.logging.AgentLogger;
-import org.hotswap.agent.watch.WatchFileEvent;
-import org.hotswap.agent.watch.WatchEventListener;
-import org.hotswap.agent.watch.Watcher;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +12,28 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardWatchEventKinds.*;
+import org.hotswap.agent.annotation.FileEvent;
+import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.watch.WatchEventListener;
+import org.hotswap.agent.watch.WatchFileEvent;
+import org.hotswap.agent.watch.Watcher;
 
 /**
  * NIO2 watcher implementation.
@@ -30,333 +45,347 @@ import static java.nio.file.StandardWatchEventKinds.*;
  * @author Jiri Bubnik
  */
 public class WatcherNIO2 implements Watcher {
-    private static AgentLogger LOGGER = AgentLogger.getLogger(WatcherNIO2.class);
+	private static AgentLogger LOGGER = AgentLogger.getLogger(WatcherNIO2.class);
 
-    private final WatchService watcher;
-    private final Map<WatchKey, Path> keys;
-    private final Map<Path, List<WatchEventListener>> listeners = new HashMap<Path, List<WatchEventListener>>();
+	private final WatchService watcher;
+	private final Map<WatchKey, Path> keys;
+	private final Map<Path, List<WatchEventListener>> listeners = new HashMap<Path, List<WatchEventListener>>();
 
-    // keep track about which classloader requested which event
-    protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new HashMap<WatchEventListener, ClassLoader>();
+	// keep track about which classloader requested which event
+	protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new HashMap<WatchEventListener, ClassLoader>();
 
+	Thread runner;
+	boolean stopped;
 
-    Thread runner;
-    boolean stopped;
+	public WatcherNIO2() throws IOException {
+		this.watcher = FileSystems.getDefault().newWatchService();
+		this.keys = new HashMap<WatchKey, Path>();
+	}
 
-    public WatcherNIO2() throws IOException {
-        this.watcher = FileSystems.getDefault().newWatchService();
-        this.keys = new HashMap<WatchKey, Path>();
-    }
+	@SuppressWarnings("unchecked")
+	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
+		return (WatchEvent<T>) event;
+	}
 
-    @SuppressWarnings("unchecked")
-    static <T> WatchEvent<T> cast(WatchEvent<?> event) {
-        return (WatchEvent<T>) event;
-    }
+	@Override
+	public synchronized void addEventListener(ClassLoader classLoader, URI pathPrefix, WatchEventListener listener) {
+		File path;
+		try {
+			// check that it is regular file
+			// toString() is weird and solves HiarchicalUriException for URI
+			// like "file:./src/resources/file.txt".
+			path = new File(pathPrefix);
+		} catch (IllegalArgumentException e) {
+			LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
+			LOGGER.trace("Unable to watch for path {} exception", e, pathPrefix);
+			return;
+		}
 
-    @Override
-    public synchronized void addEventListener(ClassLoader classLoader, URI pathPrefix, WatchEventListener listener) {
-        File path;
-        try {
-            // check that it is regular file
-            // toString() is weird and solves HiarchicalUriException for URI like "file:./src/resources/file.txt".
-            path = new File(pathPrefix);
-        } catch (IllegalArgumentException e) {
-            LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
-            LOGGER.trace("Unable to watch for path {} exception", e, pathPrefix);
-            return;
-        }
+		try {
+			addDirectory(path.toURI());
+		} catch (IOException e) {
+			LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
+			LOGGER.trace("Unable to watch path with prefix '{}' for changes.", e, pathPrefix);
+			return;
+		}
 
-        try {
-            addDirectory(path.toURI());
-        } catch (IOException e) {
-            LOGGER.error("Unable to watch path with prefix '{}' for changes.", e, pathPrefix);
-            return;
-        }
+		List<WatchEventListener> list = listeners.get(Paths.get(pathPrefix));
+		if (list == null) {
+			list = new ArrayList<WatchEventListener>();
+			listeners.put(Paths.get(pathPrefix), list);
+		}
+		list.add(listener);
 
-        List<WatchEventListener> list = listeners.get(Paths.get(pathPrefix));
-        if (list == null) {
-            list = new ArrayList<WatchEventListener>();
-            listeners.put(Paths.get(pathPrefix), list);
-        }
-        list.add(listener);
+		if (classLoader != null) {
+			classLoaderListeners.put(listener, classLoader);
+		}
+	}
 
-        if (classLoader != null)
-            classLoaderListeners.put(listener, classLoader);
-    }
+	@Override
+	public void addEventListener(ClassLoader classLoader, URL pathPrefix, WatchEventListener listener) {
+		try {
+			addEventListener(classLoader, pathPrefix.toURI(), listener);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("Unable to convert URL to URI " + pathPrefix, e);
+		}
+	}
 
-    @Override
-    public void addEventListener(ClassLoader classLoader, URL pathPrefix, WatchEventListener listener) {
-        try {
-            addEventListener(classLoader, pathPrefix.toURI(), listener);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Unable to convert URL to URI " + pathPrefix, e);
-        }
-    }
+	/**
+	 * Remove all transformers registered with a classloader
+	 * 
+	 * @param classLoader
+	 */
+	@Override
+	public void closeClassLoader(ClassLoader classLoader) {
+		for (Iterator<Map.Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet()
+				.iterator(); entryIterator.hasNext();) {
+			Map.Entry<WatchEventListener, ClassLoader> entry = entryIterator.next();
+			if (entry.getValue().equals(classLoader)) {
+				entryIterator.remove();
+				for (List<WatchEventListener> transformerList : listeners.values()) {
+					transformerList.remove(entry.getKey());
+				}
+			}
+		}
 
-    /**
-     * Remove all transformers registered with a classloader
-     * @param classLoader
-     */
-    public void closeClassLoader(ClassLoader classLoader) {
-        for (Iterator<Map.Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet().iterator();
-             entryIterator.hasNext(); ) {
-            Map.Entry<WatchEventListener, ClassLoader> entry = entryIterator.next();
-            if (entry.getValue().equals(classLoader)) {
-                entryIterator.remove();
-                for (List<WatchEventListener> transformerList : listeners.values())
-                    transformerList.remove(entry.getKey());
-            }
-        }
+		LOGGER.debug("All watch listeners removed for classLoader {}", classLoader);
+	}
 
-        LOGGER.debug("All watch listeners removed for classLoader {}", classLoader);
-    }
+	/**
+	 * Registers the given directory
+	 */
+	public void addDirectory(URI path) throws IOException {
+		try {
+			Path dir = Paths.get(path);
 
-    /**
-     * Registers the given directory
-     */
-    public void addDirectory(URI path) throws IOException {
-        try {
-            Path dir = Paths.get(path);
+			if (keys.values().contains(dir)) {
+				return;
+			}
 
-            if (keys.values().contains(dir))
-                return;
+			registerAll(dir);
+		} catch (IllegalArgumentException e) {
+			throw new IOException("Invalid URI format " + path, e);
+		} catch (FileSystemNotFoundException e) {
+			throw new IOException("Invalid URI " + path, e);
+		} catch (SecurityException e) {
+			throw new IOException("Security exception for URI " + path, e);
+		}
+	}
 
-            registerAll(dir);
-        } catch (IllegalArgumentException e) {
-            throw new IOException("Invalid URI format " + path, e);
-        } catch (FileSystemNotFoundException e) {
-            throw new IOException("Invalid URI " + path, e);
-        } catch (SecurityException e) {
-            throw new IOException("Security exception for URI " + path, e);
-        }
-    }
+	/**
+	 * Register the given directory with the WatchService
+	 */
+	private void register(Path dir) throws IOException {
+		// check duplicate registration
+		if (keys.values().contains(dir)) {
+			return;
+		}
 
+		// try to set high sensitivity
+		WatchEvent.Modifier high = get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH();
+		WatchKey key = high == null ? dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
+				: dir.register(watcher, new WatchEvent.Kind<?>[] { ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY }, high);
 
-    /**
-     * Register the given directory with the WatchService
-     */
-    private void register(Path dir) throws IOException {
-        // check duplicate registration
-        if (keys.values().contains(dir))
-            return;
+		keys.put(key, dir);
+	}
 
-        // try to set high sensitivity
-        WatchEvent.Modifier high = get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH();
-        WatchKey key =
-                (high == null) ?
-                        dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY) :
-                        dir.register(watcher, new WatchEvent.Kind<?>[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY}, high);
+	/**
+	 * Register the given directory, and all its sub-directories, with the
+	 * WatchService.
+	 */
+	private void registerAll(final Path start) throws IOException {
+		// register directory and sub-directories
+		Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				register(dir);
+				return FileVisitResult.CONTINUE;
+			}
+		});
+	}
 
-        keys.put(key, dir);
-    }
+	/**
+	 * Process all events for keys queued to the watcher
+	 *
+	 * @return true if should continue
+	 */
+	private boolean processEvents() {
 
-    /**
-     * Register the given directory, and all its sub-directories, with the
-     * WatchService.
-     */
-    private void registerAll(final Path start) throws IOException {
-        // register directory and sub-directories
-        Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                    throws IOException {
-                register(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
+		// wait for key to be signalled
+		WatchKey key;
+		try {
+			key = watcher.take();
+		} catch (InterruptedException x) {
+			return false;
+		}
 
+		Path dir = keys.get(key);
+		if (dir == null) {
+			LOGGER.warning("WatchKey '{}' not recognized", key);
+			return true;
+		}
 
-    /**
-     * Process all events for keys queued to the watcher
-     *
-     * @return true if should continue
-     */
-    private boolean processEvents() {
+		for (WatchEvent<?> event : key.pollEvents()) {
+			WatchEvent.Kind<?> kind = event.kind();
 
-        // wait for key to be signalled
-        WatchKey key;
-        try {
-            key = watcher.take();
-        } catch (InterruptedException x) {
-            return false;
-        }
+			if (kind == OVERFLOW) {
+				LOGGER.warning("WatchKey '{}' overflowed", key);
+				continue;
+			}
 
+			// Context for directory entry event is the file name of entry
+			WatchEvent<Path> ev = cast(event);
+			Path name = ev.context();
+			Path child = dir.resolve(name);
 
-        Path dir = keys.get(key);
-        if (dir == null) {
-            LOGGER.warning("WatchKey '{}' not recognized", key);
-            return true;
-        }
+			LOGGER.trace("Watch event '{}' on '{}'", event.kind().name(), child);
 
-        for (WatchEvent<?> event : key.pollEvents()) {
-            WatchEvent.Kind kind = event.kind();
+			callListeners(event, child);
 
-            if (kind == OVERFLOW) {
-                LOGGER.warning("WatchKey '{}' overflowed", key);
-                continue;
-            }
+			// if directory is created, and watching recursively, then
+			// register it and its sub-directories
+			if (kind == ENTRY_CREATE) {
+				try {
+					if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
+						registerAll(child);
+					}
+				} catch (IOException x) {
+					LOGGER.warning("Unable to register events for directory {}", x, child);
+				}
+			}
+		}
 
-            // Context for directory entry event is the file name of entry
-            WatchEvent<Path> ev = cast(event);
-            Path name = ev.context();
-            Path child = dir.resolve(name);
+		// reset key and remove from set if directory no longer accessible
+		boolean valid = key.reset();
+		if (!valid) {
+			keys.remove(key);
 
-            LOGGER.trace("Watch event '{}' on '{}'", event.kind().name(), child);
+			// all directories are inaccessible
+			if (keys.isEmpty()) {
+				return false;
+			}
+		}
 
-            callListeners(event, child);
+		return true;
 
-            // if directory is created, and watching recursively, then
-            // register it and its sub-directories
-            if (kind == ENTRY_CREATE) {
-                try {
-                    if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-                        registerAll(child);
-                    }
-                } catch (IOException x) {
-                    LOGGER.warning("Unable to register events for directory {}", x, child);
-                }
-            }
-        }
+	}
 
-        // reset key and remove from set if directory no longer accessible
-        boolean valid = key.reset();
-        if (!valid) {
-            keys.remove(key);
+	// notify listeners about new event
+	private void callListeners(final WatchEvent<?> event, final Path path) {
+		for (Map.Entry<Path, List<WatchEventListener>> list : listeners.entrySet()) {
+			for (WatchEventListener listener : list.getValue()) {
+				if (path.startsWith(list.getKey())) {
+					WatchFileEvent agentEvent = new HotswapWatchFileEvent(event, path);
 
-            // all directories are inaccessible
-            if (keys.isEmpty()) {
-                return false;
-            }
-        }
+					try {
+						listener.onEvent(agentEvent);
+					} catch (Throwable e) {
+						LOGGER.error("Error in watch event '{}' listener '{}'", e, agentEvent, listener);
+					}
+				}
+			}
+		}
+	}
 
-        return true;
+	// translate constants between NIO event and ageent event
+	private static FileEvent toAgentEvent(WatchEvent.Kind<?> kind) {
+		if (kind == ENTRY_CREATE) {
+			return FileEvent.CREATE;
+		} else if (kind == ENTRY_MODIFY) {
+			return FileEvent.MODIFY;
+		} else if (kind == ENTRY_DELETE) {
+			return FileEvent.DELETE;
+		} else {
+			throw new IllegalArgumentException("Unknown event type " + kind.name());
+		}
+	}
 
-    }
+	@Override
+	public void run() {
+		runner = new Thread() {
+			@Override
+			public void run() {
+				for (;;) {
+					if (stopped || !processEvents()) {
+						break;
+					}
+				}
+			}
+		};
 
-    // notify listeners about new event
-    private void callListeners(final WatchEvent event, final Path path) {
-        for (Map.Entry<Path, List<WatchEventListener>> list : listeners.entrySet()) {
-            for (WatchEventListener listener : list.getValue()) {
-                if (path.startsWith(list.getKey())) {
-                    WatchFileEvent agentEvent = new HotswapWatchFileEvent(event, path);
+		runner.setDaemon(true);
+		runner.start();
+	}
 
-                    try {
-                        listener.onEvent(agentEvent);
-                    } catch (Throwable e) {
-                        LOGGER.error("Error in watch event '{}' listener '{}'", e, agentEvent, listener);
-                    }
-                }
-            }
-        }
-    }
+	@Override
+	public void stop() {
+		stopped = true;
+	}
 
-    // translate constants between NIO event and ageent event
-    private static FileEvent toAgentEvent(WatchEvent.Kind kind) {
-        if (kind == ENTRY_CREATE)
-            return FileEvent.CREATE;
-        else if (kind == ENTRY_MODIFY)
-            return FileEvent.MODIFY;
-        else if (kind == ENTRY_DELETE)
-            return FileEvent.DELETE;
-        else
-            throw new IllegalArgumentException("Unknown event type " + kind.name());
-    }
+	/**
+	 * Filesystem event.
+	 */
+	public static class HotswapWatchFileEvent implements WatchFileEvent {
 
-    @Override
-    public void run() {
-        runner = new Thread() {
-            @Override
-            public void run() {
-                for (; ; ) {
-                    if (stopped || !processEvents())
-                        break;
-                }
-            }
-        };
+		private final WatchEvent<?> event;
+		private final Path path;
 
-        runner.setDaemon(true);
-        runner.start();
-    }
+		public HotswapWatchFileEvent(WatchEvent<?> event, Path path) {
+			this.event = event;
+			this.path = path;
+		}
 
-    @Override
-    public void stop() {
-        stopped = true;
-    }
+		@Override
+		public FileEvent getEventType() {
+			return toAgentEvent(event.kind());
+		}
 
-    /**
-     * Filesystem event.
-     */
-    public static class HotswapWatchFileEvent implements WatchFileEvent {
+		@Override
+		public URI getURI() {
+			return path.toUri();
+		}
 
-        private final WatchEvent event;
-        private final Path path;
+		@Override
+		public boolean isFile() {
+			// return Files.isRegularFile(path); - did not work in some cases
+			return !isDirectory();
+		}
 
-        public HotswapWatchFileEvent(WatchEvent event, Path path) {
-            this.event = event;
-            this.path = path;
-        }
+		@Override
+		public boolean isDirectory() {
+			return Files.isDirectory(path);
+		}
 
-        @Override
-        public FileEvent getEventType() {
-            return toAgentEvent(event.kind());
-        }
+		@Override
+		public String toString() {
+			return "WatchFileEvent on path " + path + " for event " + event.kind();
+		}
 
-        @Override
-        public URI getURI() {
-            return path.toUri();
-        }
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
 
-        @Override
-        public boolean isFile() {
-            //return Files.isRegularFile(path); - did not work in some cases
-            return !isDirectory();
-        }
+			HotswapWatchFileEvent that = (HotswapWatchFileEvent) o;
 
-        @Override
-        public boolean isDirectory() {
-            return Files.isDirectory(path);
-        }
+			if (!event.equals(that.event)) {
+				return false;
+			}
+			if (!path.equals(that.path)) {
+				return false;
+			}
 
-        @Override
-        public String toString() {
-            return "WatchFileEvent on path " + path + " for event " + event.kind();
-        }
+			return true;
+		}
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+		@Override
+		public int hashCode() {
+			int result = event.hashCode();
+			result = 31 * result + path.hashCode();
+			return result;
+		}
+	}
 
-            HotswapWatchFileEvent that = (HotswapWatchFileEvent) o;
-
-            if (!event.equals(that.event)) return false;
-            if (!path.equals(that.path)) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = event.hashCode();
-            result = 31 * result + path.hashCode();
-            return result;
-        }
-    }
-
-    /**
-     * Get modifier for high sensitivity on Watch events.
-     *
-     * @see <a href="https://github.com/HotswapProjects/HotswapAgent/issues/41">Issue#41</a>
-     * @see <a href="http://stackoverflow.com/questions/9588737/is-java-7-watchservice-slow-for-anyone-else">Is Java 7 WatchService Slow for Anyone Else?</a>
-     */
-    WatchEvent.Modifier get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH() {
-        try {
-            Class<?> c = Class.forName("com.sun.nio.file.SensitivityWatchEventModifier");
-            Field f = c.getField("HIGH");
-            return (WatchEvent.Modifier) f.get(c);
-        } catch (Exception e) {
-            return null;
-        }
-    }
+	/**
+	 * Get modifier for high sensitivity on Watch events.
+	 *
+	 * @see <a href="https://github.com/HotswapProjects/HotswapAgent/issues/41">
+	 *      Issue#41</a>
+	 * @see <a href=
+	 *      "http://stackoverflow.com/questions/9588737/is-java-7-watchservice-slow-for-anyone-else">
+	 *      Is Java 7 WatchService Slow for Anyone Else?</a>
+	 */
+	WatchEvent.Modifier get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH() {
+		try {
+			Class<?> c = Class.forName("com.sun.nio.file.SensitivityWatchEventModifier");
+			Field f = c.getField("HIGH");
+			return (WatchEvent.Modifier) f.get(c);
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }

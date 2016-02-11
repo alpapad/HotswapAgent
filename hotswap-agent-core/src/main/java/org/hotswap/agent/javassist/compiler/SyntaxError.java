@@ -17,7 +17,12 @@
 package org.hotswap.agent.javassist.compiler;
 
 public class SyntaxError extends CompileError {
-    public SyntaxError(Lex lexer) {
-        super("syntax error near \"" + lexer.getTextAround() + "\"", lexer);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public SyntaxError(Lex lexer) {
+		super("syntax error near \"" + lexer.getTextAround() + "\"", lexer);
+	}
 }

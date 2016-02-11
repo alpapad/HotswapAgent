@@ -5,18 +5,18 @@ package org.hotswap.agent.annotation;
  */
 public enum FileEvent {
 
-    /**
-     * New file or directory is created.
-     */
-    CREATE,
+	/**
+	 * New file or directory is created.
+	 */
+	CREATE,
 
-    /**
-     * Existing file or directory is modified.
-     */
-    MODIFY,
+	/**
+	 * Existing file or directory is modified.
+	 */
+	MODIFY,
 
-    /**
-     * Existing file is deleted.
-     */
-    DELETE
+	/**
+	 * Existing file is deleted.
+	 */
+	DELETE
 }

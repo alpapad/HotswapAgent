@@ -17,23 +17,22 @@
 package org.hotswap.agent.javassist.tools.reflect;
 
 /**
- * An interface to access a metaobject and a class metaobject.
- * This interface is implicitly implemented by the reflective
- * class.
+ * An interface to access a metaobject and a class metaobject. This interface is
+ * implicitly implemented by the reflective class.
  */
 public interface Metalevel {
-    /**
-     * Obtains the class metaobject associated with this object.
-     */
-    ClassMetaobject _getClass();
+	/**
+	 * Obtains the class metaobject associated with this object.
+	 */
+	ClassMetaobject _getClass();
 
-    /**
-     * Obtains the metaobject associated with this object.
-     */
-    org.hotswap.agent.javassist.tools.reflect.Metaobject _getMetaobject();
+	/**
+	 * Obtains the metaobject associated with this object.
+	 */
+	org.hotswap.agent.javassist.tools.reflect.Metaobject _getMetaobject();
 
-    /**
-     * Changes the metaobject associated with this object.
-     */
-    void _setMetaobject(org.hotswap.agent.javassist.tools.reflect.Metaobject m);
+	/**
+	 * Changes the metaobject associated with this object.
+	 */
+	void _setMetaobject(org.hotswap.agent.javassist.tools.reflect.Metaobject m);
 }

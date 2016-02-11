@@ -70,15 +70,9 @@ public class AnonymousClassInfosTest {
     }
 
 
-    private AnonymousClassInfos getClassPoolInfos(Class clazz) throws ClassNotFoundException {
+    private AnonymousClassInfos getClassPoolInfos(Class<?> clazz) throws ClassNotFoundException {
         ClassPool classPool = new ClassPool();
         classPool.insertClassPath(new LoaderClassPath(getClass().getClassLoader()));
         return new AnonymousClassInfos(classPool, clazz.getName());
     }
-
-    private AnonymousClassInfos getClassInfos(Class clazz) throws ClassNotFoundException {
-        return new AnonymousClassInfos(getClass().getClassLoader(), clazz.getName());
-    }
-
-
 }

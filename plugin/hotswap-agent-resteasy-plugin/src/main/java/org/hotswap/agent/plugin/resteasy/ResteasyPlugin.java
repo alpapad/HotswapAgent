@@ -80,13 +80,14 @@ public class ResteasyPlugin {
         CtClass setClass = classPool.get(java.util.Set.class.getName());
         CtField paramsField = new CtField(setClass, PARAMETER_FIELD_NAME, ctClass);
         ctClass.addField(paramsField);
-
+        
         CtMethod methInit = ctClass.getDeclaredMethod("init");
         methInit.insertBefore(
                 "{" +
                 "   if(this." + PARAMETER_FIELD_NAME + " == null) {" +
-                        PluginManagerInvoker.buildInitializePlugin(ResteasyPlugin.class) +
-                        PluginManagerInvoker.buildCallPluginMethod(ResteasyPlugin.class, "registerDispatcher", "this", "java.lang.Object") +
+                "       java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" +
+                        PluginManagerInvoker.buildInitializePlugin(ResteasyPlugin.class,"$$cl") +
+                        PluginManagerInvoker.buildCallPluginMethod("$$cl",ResteasyPlugin.class, "registerDispatcher", "this", "java.lang.Object") +
                 "   }" +
                 "   this." + FIELD_NAME + " = $1;" +
                 "   this." + PARAMETER_FIELD_NAME + " = " +
@@ -111,8 +112,9 @@ public class ResteasyPlugin {
         methInit.insertBefore(
                 "{" +
                 "   if(this." + PARAMETER_FIELD_NAME + " == null) {" +
-                        PluginManagerInvoker.buildInitializePlugin(ResteasyPlugin.class) +
-                        PluginManagerInvoker.buildCallPluginMethod(ResteasyPlugin.class, "registerDispatcher", "this", "java.lang.Object") +
+                "       java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" +
+                        PluginManagerInvoker.buildInitializePlugin(ResteasyPlugin.class,"$$cl") +
+                        PluginManagerInvoker.buildCallPluginMethod("$$cl",ResteasyPlugin.class, "registerDispatcher", "this", "java.lang.Object") +
                 "   }" +
                 "   this." + FIELD_NAME + " = $1;" +
                 "   this." + PARAMETER_FIELD_NAME + " = " +
@@ -128,11 +130,9 @@ public class ResteasyPlugin {
     }
 
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void entityReload(ClassLoader classLoader, CtClass clazz, Class original) {
-        if (AnnotationHelper.hasAnnotation(original, PATH_ANNOTATION)
-                || AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION)
-                ) {
-            LOGGER.debug("Reload @Path annotated class {}, original classloader {}", clazz.getName(), original.getClassLoader());
+    public void entityReload(ClassLoader classLoader, CtClass clazz, Class<?> original) {
+        if (AnnotationHelper.hasAnnotation(original, PATH_ANNOTATION)  || AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION) ) {
+            LOGGER.error("Reload @Path annotated class {}, original classloader {}", clazz.getName(), original.getClassLoader());
             refresh(classLoader, 500);
         }
     }
@@ -140,6 +140,8 @@ public class ResteasyPlugin {
     @OnClassFileEvent(classNameRegexp = ".*", events = {FileEvent.CREATE})
     public void newEntity(ClassLoader classLoader, CtClass clazz) throws Exception {
         if (AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION)) {
+            LOGGER.error("Load @Path annotated class {}, classloader {}", clazz.getName(), classLoader);
+
             refresh(classLoader, 500);
         }
     }

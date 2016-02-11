@@ -21,24 +21,31 @@ import org.hotswap.agent.javassist.compiler.CompileError;
 /**
  * Binary expression.
  * <p/>
- * <p>If the operator is +, the right node might be null.
- * See TypeChecker.atBinExpr().
+ * <p>
+ * If the operator is +, the right node might be null. See
+ * TypeChecker.atBinExpr().
  */
 public class BinExpr extends Expr {
-    /* operator must be either of:
-     * ||, &&, |, ^, &, ==, !=, <=, >=, <, >,
-     * <<, >>, >>>, +, -, *, /, %
-     */
+	/*
+	 * operator must be either of: ||, &&, |, ^, &, ==, !=, <=, >=, <, >, <<,
+	 * >>, >>>, +, -, *, /, %
+	 */
 
-    private BinExpr(int op, ASTree _head, org.hotswap.agent.javassist.compiler.ast.ASTList _tail) {
-        super(op, _head, _tail);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public static BinExpr makeBin(int op, ASTree oprand1, ASTree oprand2) {
-        return new BinExpr(op, oprand1, new org.hotswap.agent.javassist.compiler.ast.ASTList(oprand2));
-    }
+	private BinExpr(int op, ASTree _head, org.hotswap.agent.javassist.compiler.ast.ASTList _tail) {
+		super(op, _head, _tail);
+	}
 
-    public void accept(Visitor v) throws CompileError {
-        v.atBinExpr(this);
-    }
+	public static BinExpr makeBin(int op, ASTree oprand1, ASTree oprand2) {
+		return new BinExpr(op, oprand1, new org.hotswap.agent.javassist.compiler.ast.ASTList(oprand2));
+	}
+
+	@Override
+	public void accept(Visitor v) throws CompileError {
+		v.atBinExpr(this);
+	}
 }

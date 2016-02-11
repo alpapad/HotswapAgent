@@ -23,7 +23,8 @@ package org.hotswap.agent.javassist.compiler;
  * @see JvstCodeGen#atMethodCall(Expr)
  */
 public interface ProceedHandler {
-    void doit(JvstCodeGen gen, org.hotswap.agent.javassist.bytecode.Bytecode b, org.hotswap.agent.javassist.compiler.ast.ASTList args) throws CompileError;
+	void doit(JvstCodeGen gen, org.hotswap.agent.javassist.bytecode.Bytecode b,
+			org.hotswap.agent.javassist.compiler.ast.ASTList args) throws CompileError;
 
-    void setReturnType(JvstTypeChecker c, org.hotswap.agent.javassist.compiler.ast.ASTList args) throws CompileError;
+	void setReturnType(JvstTypeChecker c, org.hotswap.agent.javassist.compiler.ast.ASTList args) throws CompileError;
 }

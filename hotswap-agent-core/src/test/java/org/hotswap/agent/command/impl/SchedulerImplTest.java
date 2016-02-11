@@ -31,8 +31,7 @@ public class SchedulerImplTest {
         scheduler.stop();
     }
 
-    // method called by command - return classNameRegexp should be checked in callback listener
-    @SuppressWarnings("UnusedDeclaration")
+    // method called by command - return classNameRegexp should be checked in callback eventListener
     public static boolean commandMethod() {
         return true;
     }
@@ -51,7 +50,7 @@ public class SchedulerImplTest {
 
         scheduler.scheduleCommand(command);
 
-        assertTrue("Event listener not called", WaitHelper.waitForResult(resultHolder));
+        assertTrue("Event eventListener not called", WaitHelper.waitForResult(resultHolder));
     }
 
 

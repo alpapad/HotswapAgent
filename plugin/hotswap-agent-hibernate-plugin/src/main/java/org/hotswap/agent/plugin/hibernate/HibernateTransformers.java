@@ -65,32 +65,31 @@ public class HibernateTransformers {
     @OnClassLoadEvent(classNameRegexp = "org.hibernate.cfg.Configuration")
     public static void proxySessionFactory(ClassLoader classLoader, ClassPool classPool, CtClass clazz) throws Exception {
         // proceed only if EJB not available by the classloader
-        if (checkHibernateEjb(classLoader))
-            return;
+        //if (checkHibernateEjb(classLoader))
+        //    return;
 
         LOGGER.debug("Override org.hibernate.cfg.Configuration#buildSessionFactory to create a SessionFactoryProxy proxy.");
 
-        CtClass serviceRegistryClass = classPool.makeClass("org.hibernate.service.ServiceRegistry");
-        CtMethod oldMethod = clazz.getDeclaredMethod("buildSessionFactory", new CtClass[]{serviceRegistryClass});
+        CtMethod oldMethod = clazz.getDeclaredMethod("buildSessionFactory");
         oldMethod.setName("_buildSessionFactory");
 
         CtMethod newMethod = CtNewMethod.make(
-                "public org.hibernate.SessionFactory buildSessionFactory(org.hibernate.service.ServiceRegistry serviceRegistry) throws org.hibernate.HibernateException {" +
+                "public org.hibernate.SessionFactory buildSessionFactory() throws org.hibernate.HibernateException {" +
                         "  return " + SessionFactoryProxy.class.getName() + ".getWrapper(this)" +
-                        "       .proxy(_buildSessionFactory(serviceRegistry), serviceRegistry); " +
+                        "       .proxy(_buildSessionFactory()); " +
                         "}", clazz);
         clazz.addMethod(newMethod);
     }
 
-    // check if plain Hibernate or EJB mode.
-    private static boolean checkHibernateEjb(ClassLoader classLoader) {
-        try {
-            classLoader.loadClass("org.hibernate.ejb.HibernatePersistence");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
+//    // check if plain Hibernate or EJB mode.
+//    private static boolean checkHibernateEjb(ClassLoader classLoader) {
+//        try {
+//            classLoader.loadClass("org.hibernate.ejb.HibernatePersistence");
+//            return true;
+//        } catch (ClassNotFoundException e) {
+//            return false;
+//        }
+//    }
 
     @OnClassLoadEvent(classNameRegexp = "org.hibernate.validator.internal.metadata.BeanMetaDataManager")
     public static void beanMetaDataManagerRegisterVariable(CtClass ctClass) throws CannotCompileException {

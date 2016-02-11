@@ -20,19 +20,26 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Instanceof expression.
  */
 public class InstanceOfExpr extends CastExpr {
-    public InstanceOfExpr(ASTList className, int dim, ASTree expr) {
-        super(className, dim, expr);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public InstanceOfExpr(int type, int dim, ASTree expr) {
-        super(type, dim, expr);
-    }
+	public InstanceOfExpr(ASTList className, int dim, ASTree expr) {
+		super(className, dim, expr);
+	}
 
-    public String getTag() {
-        return "instanceof:" + castType + ":" + arrayDim;
-    }
+	public InstanceOfExpr(int type, int dim, ASTree expr) {
+		super(type, dim, expr);
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atInstanceOfExpr(this);
-    }
+	@Override
+	public String getTag() {
+		return "instanceof:" + castType + ":" + arrayDim;
+	}
+
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atInstanceOfExpr(this);
+	}
 }

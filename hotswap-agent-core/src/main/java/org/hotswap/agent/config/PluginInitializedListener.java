@@ -6,5 +6,5 @@ package org.hotswap.agent.config;
  * @author Jiri Bubnik
  */
 public interface PluginInitializedListener {
-    void pluginIntialized(Object plugin, ClassLoader classLoader);
+	void pluginIntialized(Object plugin, ClassLoader classLoader);
 }

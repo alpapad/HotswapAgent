@@ -9,11 +9,13 @@ import java.io.InputStream;
  * @author Jiri Bubnik
  */
 public interface ScannerVisitor {
-    /**
-     * Visit the file.
-     *
-     * @param file the file
-     * @throws IOException IO exception while working with the file stream.
-     */
-    public void visit(InputStream file) throws IOException;
+	/**
+	 * Visit the file.
+	 *
+	 * @param file
+	 *            the file
+	 * @throws IOException
+	 *             IO exception while working with the file stream.
+	 */
+	public void visit(InputStream file) throws IOException;
 }

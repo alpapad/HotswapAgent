@@ -20,20 +20,26 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Assignment expression.
  */
 public class AssignExpr extends Expr {
-    /* operator must be either of:
-     * =, %=, &=, *=, +=, -=, /=, ^=, |=, <<=, >>=, >>>=
-     */
+	/*
+	 * operator must be either of: =, %=, &=, *=, +=, -=, /=, ^=, |=, <<=, >>=,
+	 * >>>=
+	 */
 
-    private AssignExpr(int op, ASTree _head, ASTList _tail) {
-        super(op, _head, _tail);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public static AssignExpr makeAssign(int op, ASTree oprand1,
-                                        ASTree oprand2) {
-        return new AssignExpr(op, oprand1, new ASTList(oprand2));
-    }
+	private AssignExpr(int op, ASTree _head, ASTList _tail) {
+		super(op, _head, _tail);
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atAssignExpr(this);
-    }
+	public static AssignExpr makeAssign(int op, ASTree oprand1, ASTree oprand2) {
+		return new AssignExpr(op, oprand1, new ASTList(oprand2));
+	}
+
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atAssignExpr(this);
+	}
 }

@@ -20,26 +20,34 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Method call expression.
  */
 public class CallExpr extends Expr {
-    private org.hotswap.agent.javassist.compiler.MemberResolver.Method method;  // cached result of lookupMethod()
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	private org.hotswap.agent.javassist.compiler.MemberResolver.Method method; // cached
+																				// result
+																				// of
+																				// lookupMethod()
 
-    private CallExpr(ASTree _head, ASTList _tail) {
-        super(org.hotswap.agent.javassist.compiler.TokenId.CALL, _head, _tail);
-        method = null;
-    }
+	private CallExpr(ASTree _head, ASTList _tail) {
+		super(org.hotswap.agent.javassist.compiler.TokenId.CALL, _head, _tail);
+		method = null;
+	}
 
-    public void setMethod(org.hotswap.agent.javassist.compiler.MemberResolver.Method m) {
-        method = m;
-    }
+	public void setMethod(org.hotswap.agent.javassist.compiler.MemberResolver.Method m) {
+		method = m;
+	}
 
-    public org.hotswap.agent.javassist.compiler.MemberResolver.Method getMethod() {
-        return method;
-    }
+	public org.hotswap.agent.javassist.compiler.MemberResolver.Method getMethod() {
+		return method;
+	}
 
-    public static CallExpr makeCall(ASTree target, ASTree args) {
-        return new CallExpr(target, new ASTList(args));
-    }
+	public static CallExpr makeCall(ASTree target, ASTree args) {
+		return new CallExpr(target, new ASTList(args));
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atCallExpr(this);
-    }
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atCallExpr(this);
+	}
 }

@@ -14,7 +14,8 @@ import static org.junit.Assert.assertEquals;
  * Created by bubnik on 13.10.13.
  */
 public class ClassLoaderProxyTest {
-    @Test
+    @SuppressWarnings("resource")
+	@Test
     public void test() throws MalformedURLException, ClassNotFoundException {
 
         ClassLoader appClassLoader = new URLClassLoader(new URL[]{}, getClass().getClassLoader());

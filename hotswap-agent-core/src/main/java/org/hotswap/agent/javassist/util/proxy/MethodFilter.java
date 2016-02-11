@@ -24,8 +24,8 @@ import java.lang.reflect.Method;
  * @see ProxyFactory#setFilter(MethodFilter)
  */
 public interface MethodFilter {
-    /**
-     * Returns true if the given method is implemented by a handler.
-     */
-    boolean isHandled(Method m);
+	/**
+	 * Returns true if the given method is implemented by a handler.
+	 */
+	boolean isHandled(Method m);
 }

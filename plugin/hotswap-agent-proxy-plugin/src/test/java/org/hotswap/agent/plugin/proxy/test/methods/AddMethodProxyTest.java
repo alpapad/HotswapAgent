@@ -120,7 +120,7 @@ public class AddMethodProxyTest {
 		__toVersion__Delayed(1);
 		
 		Method method = getMethod(a, "getValue2");
-		assertEquals(2, method.invoke(a, null));
+		assertEquals(2, method.invoke(a,(Object[]) null));
 	}
 	
 	@Test
@@ -155,7 +155,7 @@ public class AddMethodProxyTest {
 		
 		Method method = getMethod(a, "getValue2");
 		assertEquals("getValue2", method.getName());
-		assertEquals(2, method.invoke(a, null));
+		assertEquals(2, method.invoke(a, (Object[])null));
 		method = getMethod(a, "getValue33");
 		assertEquals("getValue33", method.getName());
 		assertEquals(2, method.invoke(a, new Object[] { new Object[] { new Object() } }));

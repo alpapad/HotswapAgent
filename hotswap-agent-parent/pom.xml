@@ -24,8 +24,8 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.1</version>
 					<configuration>
-						<source>1.7</source>
-						<target>1.7</target>
+						<source>1.8</source>
+						<target>1.8</target>
 					</configuration>
 				</plugin>
                 <plugin>
@@ -50,37 +50,6 @@
                         </execution>
                     </executions>
                 </plugin>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-                <!--<plugin>-->
-                	<!--<groupId>org.eclipse.m2e</groupId>-->
-                	<!--<artifactId>lifecycle-mapping</artifactId>-->
-                	<!--<version>1.0.0</version>-->
-                	<!--<configuration>-->
-                		<!--<lifecycleMappingMetadata>-->
-                			<!--<pluginExecutions>-->
-                				<!--<pluginExecution>-->
-                					<!--<pluginExecutionFilter>-->
-                						<!--<groupId>-->
-                							<!--org.apache.maven.plugins-->
-                						<!--</groupId>-->
-                						<!--<artifactId>-->
-                							<!--maven-dependency-plugin-->
-                						<!--</artifactId>-->
-                						<!--<versionRange>-->
-                							<!--[2.8,)-->
-                						<!--</versionRange>-->
-                						<!--<goals>-->
-                							<!--<goal>properties</goal>-->
-                						<!--</goals>-->
-                					<!--</pluginExecutionFilter>-->
-                					<!--<action>-->
-                						<!--<execute />-->
-                					<!--</action>-->
-                				<!--</pluginExecution>-->
-                			<!--</pluginExecutions>-->
-                		<!--</lifecycleMappingMetadata>-->
-                	<!--</configuration>-->
-                <!--</plugin>-->
             </plugins>
         </pluginManagement>
         <plugins>
@@ -103,11 +72,6 @@
                 <configuration>
 	                <useSystemClassLoader>true</useSystemClassLoader>
 	                <useManifestOnlyJar>false</useManifestOnlyJar>
-	                <!--
-	                <useSystemClassLoader>true</useSystemClassLoader>
-	                <useManifestOnlyJar>false</useManifestOnlyJar>
-                    <argLine>-XXaltjvm=${dcevm} -javaagent:${org.hotswap.agent:hotswap-agent-core:jar} -Xbootclasspath/a:"${org.hotswap.agent:hotswap-agent-core:jar}:${project.build.OutputDirectory}"</argLine>
-                     -->
 	                <argLine>-XXaltjvm=${dcevm} -javaagent:${org.hotswap.agent:hotswap-agent-core:jar}</argLine>
                 </configuration>
             </plugin>

@@ -17,49 +17,50 @@
 package org.hotswap.agent.javassist.convert;
 
 final public class TransformWriteField extends TransformReadField {
-    public TransformWriteField(Transformer next, org.hotswap.agent.javassist.CtField field,
-                               String methodClassname, String methodName) {
-        super(next, field, methodClassname, methodName);
-    }
+	public TransformWriteField(Transformer next, org.hotswap.agent.javassist.CtField field, String methodClassname,
+			String methodName) {
+		super(next, field, methodClassname, methodName);
+	}
 
-    public int transform(org.hotswap.agent.javassist.CtClass tclazz, int pos, org.hotswap.agent.javassist.bytecode.CodeIterator iterator,
-                         org.hotswap.agent.javassist.bytecode.ConstPool cp) throws org.hotswap.agent.javassist.bytecode.BadBytecode {
-        int c = iterator.byteAt(pos);
-        if (c == PUTFIELD || c == PUTSTATIC) {
-            int index = iterator.u16bitAt(pos + 1);
-            String typedesc = isField(tclazz.getClassPool(), cp,
-                    fieldClass, fieldname, isPrivate, index);
-            if (typedesc != null) {
-                if (c == PUTSTATIC) {
-                    org.hotswap.agent.javassist.bytecode.CodeAttribute ca = iterator.get();
-                    iterator.move(pos);
-                    char c0 = typedesc.charAt(0);
-                    if (c0 == 'J' || c0 == 'D') {       // long or double
-                        // insertGap() may insert 4 bytes.
-                        pos = iterator.insertGap(3);
-                        iterator.writeByte(ACONST_NULL, pos);
-                        iterator.writeByte(DUP_X2, pos + 1);
-                        iterator.writeByte(POP, pos + 2);
-                        ca.setMaxStack(ca.getMaxStack() + 2);
-                    } else {
-                        // insertGap() may insert 4 bytes.
-                        pos = iterator.insertGap(2);
-                        iterator.writeByte(ACONST_NULL, pos);
-                        iterator.writeByte(SWAP, pos + 1);
-                        ca.setMaxStack(ca.getMaxStack() + 1);
-                    }
+	@Override
+	public int transform(org.hotswap.agent.javassist.CtClass tclazz, int pos,
+			org.hotswap.agent.javassist.bytecode.CodeIterator iterator,
+			org.hotswap.agent.javassist.bytecode.ConstPool cp) throws org.hotswap.agent.javassist.bytecode.BadBytecode {
+		int c = iterator.byteAt(pos);
+		if (c == PUTFIELD || c == PUTSTATIC) {
+			int index = iterator.u16bitAt(pos + 1);
+			String typedesc = isField(tclazz.getClassPool(), cp, fieldClass, fieldname, isPrivate, index);
+			if (typedesc != null) {
+				if (c == PUTSTATIC) {
+					org.hotswap.agent.javassist.bytecode.CodeAttribute ca = iterator.get();
+					iterator.move(pos);
+					char c0 = typedesc.charAt(0);
+					if (c0 == 'J' || c0 == 'D') { // long or double
+						// insertGap() may insert 4 bytes.
+						pos = iterator.insertGap(3);
+						iterator.writeByte(ACONST_NULL, pos);
+						iterator.writeByte(DUP_X2, pos + 1);
+						iterator.writeByte(POP, pos + 2);
+						ca.setMaxStack(ca.getMaxStack() + 2);
+					} else {
+						// insertGap() may insert 4 bytes.
+						pos = iterator.insertGap(2);
+						iterator.writeByte(ACONST_NULL, pos);
+						iterator.writeByte(SWAP, pos + 1);
+						ca.setMaxStack(ca.getMaxStack() + 1);
+					}
 
-                    pos = iterator.next();
-                }
+					pos = iterator.next();
+				}
 
-                int mi = cp.addClassInfo(methodClassname);
-                String type = "(Ljava/lang/Object;" + typedesc + ")V";
-                int methodref = cp.addMethodrefInfo(mi, methodName, type);
-                iterator.writeByte(INVOKESTATIC, pos);
-                iterator.write16bit(methodref, pos + 1);
-            }
-        }
+				int mi = cp.addClassInfo(methodClassname);
+				String type = "(Ljava/lang/Object;" + typedesc + ")V";
+				int methodref = cp.addMethodrefInfo(mi, methodName, type);
+				iterator.writeByte(INVOKESTATIC, pos);
+				iterator.write16bit(methodref, pos + 1);
+			}
+		}
 
-        return pos;
-    }
+		return pos;
+	}
 }

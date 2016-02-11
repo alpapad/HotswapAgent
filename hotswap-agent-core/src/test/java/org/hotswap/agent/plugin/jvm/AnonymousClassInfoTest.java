@@ -45,12 +45,12 @@ public class AnonymousClassInfoTest {
     }
 
     private AnonymousClassInfo getAnonymousClassInfo() throws ClassNotFoundException {
-        Class clazz = getClass().getClassLoader().loadClass(AnonymousTestClass1.class.getName() + "$1");
+        Class<?> clazz = getClass().getClassLoader().loadClass(AnonymousTestClass1.class.getName() + "$1");
         return new AnonymousClassInfo(clazz);
     }
 
     public AnonymousClassInfo getAnonymousCtClassInfo() throws NotFoundException, ClassNotFoundException, IOException, CannotCompileException {
-        Class clazz = getClass().getClassLoader().loadClass(AnonymousTestClass1.class.getName() + "$1");
+        Class<?> clazz = getClass().getClassLoader().loadClass(AnonymousTestClass1.class.getName() + "$1");
 
         ClassPool classPool = new ClassPool();
         classPool.appendClassPath(new LoaderClassPath(getClass().getClassLoader()));

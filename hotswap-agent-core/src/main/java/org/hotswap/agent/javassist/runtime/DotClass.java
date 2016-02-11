@@ -17,13 +17,12 @@
 package org.hotswap.agent.javassist.runtime;
 
 /**
- * A support class for implementing <code>.class</code> notation.
- * This is required at runtime
- * only if <code>.class</code> notation is used in source code given
- * to the Javassist compiler.
+ * A support class for implementing <code>.class</code> notation. This is
+ * required at runtime only if <code>.class</code> notation is used in source
+ * code given to the Javassist compiler.
  */
 public class DotClass {
-    public static NoClassDefFoundError fail(ClassNotFoundException e) {
-        return new NoClassDefFoundError(e.getMessage());
-    }
+	public static NoClassDefFoundError fail(ClassNotFoundException e) {
+		return new NoClassDefFoundError(e.getMessage());
+	}
 }

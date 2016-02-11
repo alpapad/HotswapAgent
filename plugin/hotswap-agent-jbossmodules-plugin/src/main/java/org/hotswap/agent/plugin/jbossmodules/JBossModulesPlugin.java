@@ -35,7 +35,7 @@ public class JBossModulesPlugin {
     @OnClassLoadEvent(classNameRegexp = "org.jboss.modules.ModuleLoader")
     public static void transformModule(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
         ctClass.getDeclaredMethod("loadModule", new CtClass[]{classPool.get("org.jboss.modules.ModuleIdentifier")}).insertAfter(
-                    "if (identifier.getName().matches(\"" + USE_MODULES_REGEXP + "\")) {" +
+        		"if (identifier.getName().matches(\"" + USE_MODULES_REGEXP + "\")) {" +
                         PluginManagerInvoker.buildInitializePlugin(JBossModulesPlugin.class, "$_.getClassLoaderPrivate()") +
                     "}" +
                     "return $_;"

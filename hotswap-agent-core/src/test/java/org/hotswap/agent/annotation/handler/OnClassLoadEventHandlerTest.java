@@ -13,7 +13,7 @@ import org.junit.Test;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Jiri Bubnik

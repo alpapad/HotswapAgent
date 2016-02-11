@@ -54,7 +54,6 @@ public class GeneratorParametersTransformer {
 			// We use class name strings because some libraries repackage cglib to a different namespace to avoid
 			// conflicts.
 			if (interfaceName.endsWith(".GeneratorStrategy")) {
-				@SuppressWarnings("unchecked")
 				List<MethodInfo> methodInfos = cc.getClassFile2().getMethods();
 				for (MethodInfo method : methodInfos) {
 					if (method.getName().equals("generate") && method.getDescriptor().endsWith("[B")) {

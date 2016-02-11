@@ -150,7 +150,7 @@ public class SpringPluginTest {
         assertEquals("Hello from Repository ServiceWithAspect Prototype", factory.getBean(BeanPrototype.class).hello());
     }
 
-    private void swapClasses(Class original, String swap) throws Exception {
+    private void swapClasses(Class<?> original, String swap) throws Exception {
         ClassPathBeanDefinitionScannerAgent.reloadFlag = true;
         HotSwapper.swapClasses(original, swap);
         assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {

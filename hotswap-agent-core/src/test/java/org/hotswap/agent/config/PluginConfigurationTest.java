@@ -19,11 +19,11 @@ public class PluginConfigurationTest {
         File tempFile = File.createTempFile("test", "test");
         
         // find by URL
-        pluginConfiguration.properties.setProperty("watchResources", tempFile.toURI().toURL().toString());
+        pluginConfiguration.base.setProperty("watchResources", tempFile.toURI().toURL().toString());
         assertEquals(tempFile.toURI().toURL(), pluginConfiguration.getWatchResources()[0]);
 
         // find by file name
-        pluginConfiguration.properties.setProperty("watchResources", tempFile.getAbsolutePath());
+        pluginConfiguration.base.setProperty("watchResources", tempFile.getAbsolutePath());
 
         // On Mac OS X, 10.9.4, the temp folders use a path like "/var/..." and the canonical path is like "/private/var/..."
         // the getWatchResources() uses a getCanonicalFile() internally, so it returns "/private/var/...", so using

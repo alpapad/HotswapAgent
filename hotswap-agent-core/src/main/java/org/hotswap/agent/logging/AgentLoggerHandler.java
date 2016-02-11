@@ -13,65 +13,68 @@ import java.util.Date;
  */
 public class AgentLoggerHandler {
 
-    // stream to receive the log
-    PrintStream outputStream;
+	// stream to receive the log
+	PrintStream outputStream;
 
-    SimpleDateFormat sdf = new SimpleDateFormat("H:m:s.SSS");
+	SimpleDateFormat sdf = new SimpleDateFormat("H:m:s.SSS");
 
-    /**
-     * Setup custom stream (default is System.out).
-     *
-     * @param outputStream custom stream
-     */
-    public void setPrintStream(PrintStream outputStream) {
-        this.outputStream = outputStream;
-    }
+	/**
+	 * Setup custom stream (default is System.out).
+	 *
+	 * @param outputStream
+	 *            custom stream
+	 */
+	public void setPrintStream(PrintStream outputStream) {
+		this.outputStream = outputStream;
+	}
 
-    // print a message to System.out and optionally to custom stream
-    protected void printMessage(String message) {
-        String log = "HOTSWAP AGENT: " + sdf.format(new Date()) +  " " + message;
-        System.out.println(log);
-        if (outputStream != null)
-            outputStream.println(log);
-    }
+	// print a message to System.out and optionally to custom stream
+	protected void printMessage(String message) {
+		String log = "HOTSWAP AGENT: " + sdf.format(new Date()) + " " + message;
+		System.out.println(log);
+		if (outputStream != null) {
+			outputStream.println(log);
+		}
+	}
 
-    public void print(Class clazz, AgentLogger.Level level, String message, Throwable throwable, Object... args) {
+	public void print(Class<?> clazz, AgentLogger.Level level, String message, Throwable throwable, Object... args) {
 
-        // replace {} in string with actual parameters
-        String messageWithArgs = message;
-        for (Object arg : args) {
-            int index = messageWithArgs.indexOf("{}");
-            if (index >= 0) {
-                messageWithArgs = messageWithArgs.substring(0, index) + String.valueOf(arg) + messageWithArgs.substring(index + 2);
-            }
-        }
+		// replace {} in string with actual parameters
+		String messageWithArgs = message;
+		for (Object arg : args) {
+			int index = messageWithArgs.indexOf("{}");
+			if (index >= 0) {
+				messageWithArgs = messageWithArgs.substring(0, index) + String.valueOf(arg)
+						+ messageWithArgs.substring(index + 2);
+			}
+		}
 
-        StringBuffer stringBuffer = new StringBuffer();
-//        stringBuffer.append(formatCurrentTime());
-//        stringBuffer.append(" ");
-        stringBuffer.append(level);
-        stringBuffer.append(" (");
-        stringBuffer.append(clazz.getName());
-        stringBuffer.append(") - ");
-        stringBuffer.append(messageWithArgs);
+		StringBuffer stringBuffer = new StringBuffer();
+		// stringBuffer.append(formatCurrentTime());
+		// stringBuffer.append(" ");
+		stringBuffer.append(level);
+		stringBuffer.append(" (");
+		stringBuffer.append(clazz.getSimpleName());
+		stringBuffer.append(") - ");
+		stringBuffer.append(messageWithArgs);
 
-        if (throwable != null) {
-            stringBuffer.append("\n");
-            stringBuffer.append(formatErrorTrace(throwable));
-        }
+		if (throwable != null) {
+			stringBuffer.append("\n");
+			stringBuffer.append(formatErrorTrace(throwable));
+		}
 
-        printMessage(stringBuffer.toString());
-    }
+		printMessage(stringBuffer.toString());
+	}
 
-    private String formatErrorTrace(Throwable throwable) {
-        StringWriter errors = new StringWriter();
-        throwable.printStackTrace(new PrintWriter(errors));
-        return errors.toString();
-    }
+	private String formatErrorTrace(Throwable throwable) {
+		StringWriter errors = new StringWriter();
+		throwable.printStackTrace(new PrintWriter(errors));
+		return errors.toString();
+	}
 
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.S");
+	SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss.S");
 
-    protected String formatCurrentTime() {
-        return simpleDateFormat.format(new Date());
-    }
+	protected String formatCurrentTime() {
+		return simpleDateFormat.format(new Date());
+	}
 }

@@ -17,26 +17,33 @@
 package org.hotswap.agent.javassist.compiler;
 
 public class NoFieldException extends CompileError {
-    private String fieldName;
-    private org.hotswap.agent.javassist.compiler.ast.ASTree expr;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	private String fieldName;
+	private org.hotswap.agent.javassist.compiler.ast.ASTree expr;
 
-    /* NAME must be JVM-internal representation.
-     */
-    public NoFieldException(String name, org.hotswap.agent.javassist.compiler.ast.ASTree e) {
-        super("no such field: " + name);
-        fieldName = name;
-        expr = e;
-    }
+	/*
+	 * NAME must be JVM-internal representation.
+	 */
+	public NoFieldException(String name, org.hotswap.agent.javassist.compiler.ast.ASTree e) {
+		super("no such field: " + name);
+		fieldName = name;
+		expr = e;
+	}
 
-    /* The returned name should be JVM-internal representation.
-     */
-    public String getField() {
-        return fieldName;
-    }
+	/*
+	 * The returned name should be JVM-internal representation.
+	 */
+	public String getField() {
+		return fieldName;
+	}
 
-    /* Returns the expression where this exception is thrown.
-     */
-    public org.hotswap.agent.javassist.compiler.ast.ASTree getExpr() {
-        return expr;
-    }
+	/*
+	 * Returns the expression where this exception is thrown.
+	 */
+	public org.hotswap.agent.javassist.compiler.ast.ASTree getExpr() {
+		return expr;
+	}
 }

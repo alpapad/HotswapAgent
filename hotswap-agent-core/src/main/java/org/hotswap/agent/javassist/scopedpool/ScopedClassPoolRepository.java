@@ -25,72 +25,78 @@ import java.util.Map;
  * @version $Revision: 1.4 $
  */
 public interface ScopedClassPoolRepository {
-    /**
-     * Records a factory.
-     */
-    void setClassPoolFactory(ScopedClassPoolFactory factory);
+	/**
+	 * Records a factory.
+	 */
+	void setClassPoolFactory(ScopedClassPoolFactory factory);
 
-    /**
-     * Obtains the recorded factory.
-     */
-    ScopedClassPoolFactory getClassPoolFactory();
+	/**
+	 * Obtains the recorded factory.
+	 */
+	ScopedClassPoolFactory getClassPoolFactory();
 
-    /**
-     * Returns whether or not the class pool is pruned.
-     *
-     * @return the prune.
-     */
-    boolean isPrune();
+	/**
+	 * Returns whether or not the class pool is pruned.
+	 *
+	 * @return the prune.
+	 */
+	boolean isPrune();
 
-    /**
-     * Sets the prune flag.
-     *
-     * @param prune a new value.
-     */
-    void setPrune(boolean prune);
+	/**
+	 * Sets the prune flag.
+	 *
+	 * @param prune
+	 *            a new value.
+	 */
+	void setPrune(boolean prune);
 
-    /**
-     * Create a scoped classpool.
-     *
-     * @param cl  the classloader.
-     * @param src the original classpool.
-     * @return the classpool.
-     */
-    ScopedClassPool createScopedClassPool(ClassLoader cl, org.hotswap.agent.javassist.ClassPool src);
+	/**
+	 * Create a scoped classpool.
+	 *
+	 * @param cl
+	 *            the classloader.
+	 * @param src
+	 *            the original classpool.
+	 * @return the classpool.
+	 */
+	ScopedClassPool createScopedClassPool(ClassLoader cl, org.hotswap.agent.javassist.ClassPool src);
 
-    /**
-     * Finds a scoped classpool registered under the passed in classloader.
-     *
-     * @param cl the classloader.
-     * @return the classpool.
-     */
-    org.hotswap.agent.javassist.ClassPool findClassPool(ClassLoader cl);
+	/**
+	 * Finds a scoped classpool registered under the passed in classloader.
+	 *
+	 * @param cl
+	 *            the classloader.
+	 * @return the classpool.
+	 */
+	org.hotswap.agent.javassist.ClassPool findClassPool(ClassLoader cl);
 
-    /**
-     * Register a classloader.
-     *
-     * @param ucl the classloader.
-     * @return the classpool.
-     */
-    org.hotswap.agent.javassist.ClassPool registerClassLoader(ClassLoader ucl);
+	/**
+	 * Register a classloader.
+	 *
+	 * @param ucl
+	 *            the classloader.
+	 * @return the classpool.
+	 */
+	org.hotswap.agent.javassist.ClassPool registerClassLoader(ClassLoader ucl);
 
-    /**
-     * Get the registered classloaders.
-     *
-     * @return the registered classloaders.
-     */
-    Map getRegisteredCLs();
+	/**
+	 * Get the registered classloaders.
+	 *
+	 * @return the registered classloaders.
+	 */
+	Map<ClassLoader, ScopedClassPool>  getRegisteredCLs();
 
-    /**
-     * This method will check to see if a register classloader has been
-     * undeployed (as in JBoss).
-     */
-    void clearUnregisteredClassLoaders();
+	/**
+	 * This method will check to see if a register classloader has been
+	 * undeployed (as in JBoss).
+	 */
+	void clearUnregisteredClassLoaders();
 
-    /**
-     * Unregisters a classpool and unregisters its classloader.
-     *
-     * @param cl the classloader the pool is stored under.
-     */
-    void unregisterClassLoader(ClassLoader cl);
+	/**
+	 * Unregisters a classpool and unregisters its classloader.
+	 *
+	 * @param cl
+	 *            the classloader the pool is stored under.
+	 */
+	void unregisterClassLoader(ClassLoader cl);
 }

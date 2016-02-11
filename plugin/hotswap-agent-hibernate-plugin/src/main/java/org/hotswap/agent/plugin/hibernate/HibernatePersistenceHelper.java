@@ -19,66 +19,71 @@ import java.util.Set;
  * @author Jiri Bubnik
  */
 public class HibernatePersistenceHelper {
-    private static AgentLogger LOGGER = AgentLogger.getLogger(HibernatePersistenceHelper.class);
+	private static AgentLogger LOGGER = AgentLogger.getLogger(HibernatePersistenceHelper.class);
 
-    // each persistence unit should be wrapped only once
-    static Set<String> wrappedPersistenceUnitNames = new HashSet<String>();
+	// each persistence unit should be wrapped only once
+	static Set<String> wrappedPersistenceUnitNames = new HashSet<String>();
 
-    /**
-     * @param info       persistent unit definition
-     * @param properties properties to create entity manager factory
-     * @param original   entity manager factory
-     * @return proxy of entity manager
-     */
-    public static EntityManagerFactory createContainerEntityManagerFactoryProxy(PersistenceUnitInfo info, Map properties,
-                                                                                EntityManagerFactory original) {
-        // ensure only once
-        if (wrappedPersistenceUnitNames.contains(info.getPersistenceUnitName()))
-            return original;
-        wrappedPersistenceUnitNames.add(info.getPersistenceUnitName());
+	/**
+	 * @param info
+	 *            persistent unit definition
+	 * @param properties
+	 *            properties to create entity manager factory
+	 * @param original
+	 *            entity manager factory
+	 * @return proxy of entity manager
+	 */
+	public static EntityManagerFactory createContainerEntityManagerFactoryProxy(PersistenceUnitInfo info,
+			Map<?,?> properties, EntityManagerFactory original) {
+		// ensure only once
+		if (wrappedPersistenceUnitNames.contains(info.getPersistenceUnitName()))
+			return original;
+		wrappedPersistenceUnitNames.add(info.getPersistenceUnitName());
 
-        EntityManagerFactoryProxy wrapper = EntityManagerFactoryProxy.getWrapper(info.getPersistenceUnitName());
-        EntityManagerFactory proxy = wrapper.proxy(original, info.getPersistenceUnitName(), info, properties);
+		EntityManagerFactoryProxy wrapper = EntityManagerFactoryProxy.getWrapper(info.getPersistenceUnitName());
+		EntityManagerFactory proxy = wrapper.proxy(original, info.getPersistenceUnitName(), info, properties);
 
-        initPlugin(original);
+		initPlugin(original);
 
-        LOGGER.debug("Returning container EntityManager proxy {} instead of EntityManager {}", proxy.getClass(), original);
-        return proxy;
-    }
+		LOGGER.debug("Returning container EntityManager proxy {} instead of EntityManager {}", proxy.getClass(),
+				original);
+		return proxy;
+	}
 
-    /**
-     * @param persistenceUnitName persistent unit name
-     * @param properties          properties to create entity manager factory
-     * @param original            entity manager factory
-     * @return proxy of entity manager
-     */
-    public static EntityManagerFactory createEntityManagerFactoryProxy(String persistenceUnitName, Map properties,
-                                                                       EntityManagerFactory original) {
-        // ensure only once
-        if (wrappedPersistenceUnitNames.contains(persistenceUnitName))
-            return original;
-        wrappedPersistenceUnitNames.add(persistenceUnitName);
+	/**
+	 * @param persistenceUnitName
+	 *            persistent unit name
+	 * @param properties
+	 *            properties to create entity manager factory
+	 * @param original
+	 *            entity manager factory
+	 * @return proxy of entity manager
+	 */
+	public static EntityManagerFactory createEntityManagerFactoryProxy(String persistenceUnitName, Map<?,?> properties,
+			EntityManagerFactory original) {
+		// ensure only once
+		if (wrappedPersistenceUnitNames.contains(persistenceUnitName))
+			return original;
+		wrappedPersistenceUnitNames.add(persistenceUnitName);
 
-        EntityManagerFactoryProxy wrapper = EntityManagerFactoryProxy.getWrapper(persistenceUnitName);
-        EntityManagerFactory proxy = wrapper.proxy(original, persistenceUnitName, null, properties);
+		EntityManagerFactoryProxy wrapper = EntityManagerFactoryProxy.getWrapper(persistenceUnitName);
+		EntityManagerFactory proxy = wrapper.proxy(original, persistenceUnitName, null, properties);
 
-        initPlugin(original);
+		initPlugin(original);
 
-        LOGGER.debug("Returning EntityManager proxy {} instead of EntityManager {}", proxy.getClass(), original);
-        return proxy;
-    }
+		LOGGER.debug("Returning EntityManager proxy {} instead of EntityManager {}", proxy.getClass(), original);
+		return proxy;
+	}
 
-    // call initializePlugin and setup version and EJB flag
-    private static void initPlugin(EntityManagerFactory original) {
-        ClassLoader appClassLoader = original.getClass().getClassLoader();
+	// call initializePlugin and setup version and EJB flag
+	private static void initPlugin(EntityManagerFactory original) {
+		ClassLoader appClassLoader = original.getClass().getClassLoader();
 
-        String version = Version.getVersionString();
+		String version = Version.getVersionString();
 
-        PluginManagerInvoker.callInitializePlugin(HibernatePlugin.class, appClassLoader);
-        PluginManagerInvoker.callPluginMethod(HibernatePlugin.class, appClassLoader,
-                "init",
-                new Class[]{String.class, Boolean.class},
-                new Object[]{version, true});
+		PluginManagerInvoker.callInitializePlugin(HibernatePlugin.class, appClassLoader);
+		PluginManagerInvoker.callPluginMethod(HibernatePlugin.class, appClassLoader, "init",
+				new Class[] { String.class, Boolean.class }, new Object[] { version, true });
 
-    }
+	}
 }

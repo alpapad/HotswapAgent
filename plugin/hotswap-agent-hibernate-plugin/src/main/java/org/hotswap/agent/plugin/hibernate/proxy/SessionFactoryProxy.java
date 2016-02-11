@@ -1,19 +1,21 @@
 package org.hotswap.agent.plugin.hibernate.proxy;
 
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.internal.SessionFactoryImpl;
-import org.hibernate.service.ServiceRegistry;
-import org.hotswap.agent.javassist.util.proxy.MethodHandler;
-import org.hotswap.agent.javassist.util.proxy.Proxy;
-import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
-import sun.reflect.ReflectionFactory;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.impl.SessionFactoryImpl;
+//import org.hibernate.internal.SessionFactoryImpl;
+//import org.hibernate.service.ServiceRegistry;
+import org.hotswap.agent.javassist.util.proxy.MethodHandler;
+import org.hotswap.agent.javassist.util.proxy.Proxy;
+import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
+
+import sun.reflect.ReflectionFactory;
 
 /**
  * For Hibernate without EJB (EntityManager).
@@ -22,6 +24,7 @@ import java.util.Map;
  *
  * @author Jiri Bubnik
  */
+@SuppressWarnings("restriction")
 public class SessionFactoryProxy {
     private static Map<Configuration, SessionFactoryProxy> proxiedFactories = new HashMap<Configuration, SessionFactoryProxy>();
 
@@ -47,17 +50,15 @@ public class SessionFactoryProxy {
     }
 
     public void refreshProxiedFactory() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method m = Configuration.class.getDeclaredMethod("_buildSessionFactory", ServiceRegistry.class);
-        currentInstance = (SessionFactory) m.invoke(configuration, serviceRegistry);
+        Method m = Configuration.class.getDeclaredMethod("buildSessionFactory", Configuration.class);
+        currentInstance = (SessionFactory) m.invoke(configuration, configuration);
     }
 
     private Configuration configuration;
     private SessionFactory currentInstance;
-    private ServiceRegistry serviceRegistry;
 
-    public SessionFactory proxy(SessionFactory sessionFactory, ServiceRegistry serviceRegistry) {
+    public SessionFactory proxy(SessionFactory sessionFactory) {
         this.currentInstance = sessionFactory;
-        this.serviceRegistry = serviceRegistry;
 
         ProxyFactory factory = new ProxyFactory();
         factory.setSuperclass(SessionFactoryImpl.class);
@@ -74,7 +75,7 @@ public class SessionFactoryProxy {
 
         Object instance;
         try {
-            Constructor constructor = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(factory.createClass(), Object.class.getDeclaredConstructor(new Class[0]));
+            Constructor<?> constructor = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(factory.createClass(), Object.class.getDeclaredConstructor(new Class[0]));
             instance = constructor.newInstance();
             ((Proxy) instance).setHandler(handler);
         } catch (Exception e) {

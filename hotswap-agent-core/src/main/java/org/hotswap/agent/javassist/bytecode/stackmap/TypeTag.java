@@ -17,12 +17,17 @@
 package org.hotswap.agent.javassist.bytecode.stackmap;
 
 public interface TypeTag {
-    String TOP_TYPE = "*top*";
-    org.hotswap.agent.javassist.bytecode.stackmap.TypeData TOP = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(TOP_TYPE, org.hotswap.agent.javassist.bytecode.StackMapTable.TOP);
-    org.hotswap.agent.javassist.bytecode.stackmap.TypeData INTEGER = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType("int", org.hotswap.agent.javassist.bytecode.StackMapTable.INTEGER);
-    org.hotswap.agent.javassist.bytecode.stackmap.TypeData FLOAT = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType("float", org.hotswap.agent.javassist.bytecode.StackMapTable.FLOAT);
-    org.hotswap.agent.javassist.bytecode.stackmap.TypeData DOUBLE = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType("double", org.hotswap.agent.javassist.bytecode.StackMapTable.DOUBLE);
-    org.hotswap.agent.javassist.bytecode.stackmap.TypeData LONG = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType("long", org.hotswap.agent.javassist.bytecode.StackMapTable.LONG);
+	String TOP_TYPE = "*top*";
+	org.hotswap.agent.javassist.bytecode.stackmap.TypeData TOP = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(
+			TOP_TYPE, org.hotswap.agent.javassist.bytecode.StackMapTable.TOP);
+	org.hotswap.agent.javassist.bytecode.stackmap.TypeData INTEGER = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(
+			"int", org.hotswap.agent.javassist.bytecode.StackMapTable.INTEGER);
+	org.hotswap.agent.javassist.bytecode.stackmap.TypeData FLOAT = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(
+			"float", org.hotswap.agent.javassist.bytecode.StackMapTable.FLOAT);
+	org.hotswap.agent.javassist.bytecode.stackmap.TypeData DOUBLE = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(
+			"double", org.hotswap.agent.javassist.bytecode.StackMapTable.DOUBLE);
+	org.hotswap.agent.javassist.bytecode.stackmap.TypeData LONG = new org.hotswap.agent.javassist.bytecode.stackmap.TypeData.BasicType(
+			"long", org.hotswap.agent.javassist.bytecode.StackMapTable.LONG);
 
-    // and NULL, THIS, OBJECT, UNINIT
+	// and NULL, THIS, OBJECT, UNINIT
 }

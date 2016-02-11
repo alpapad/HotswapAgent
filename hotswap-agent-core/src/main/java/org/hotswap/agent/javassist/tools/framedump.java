@@ -18,30 +18,37 @@ package org.hotswap.agent.javassist.tools;
 import org.hotswap.agent.javassist.bytecode.analysis.FramePrinter;
 
 /**
- * framedump is a tool for viewing a merged combination of the instructions and frame state
- * of all methods in a class.
+ * framedump is a tool for viewing a merged combination of the instructions and
+ * frame state of all methods in a class.
  * <p/>
- * <p>For example,
- * <ul><pre>% java framedump foo.class</pre></ul>
+ * <p>
+ * For example,
+ * <ul>
+ * 
+ * <pre>
+ * % java framedump foo.class
+ * </pre>
+ * </ul>
  */
 public class framedump {
-    private framedump() {
-    }
+	private framedump() {
+	}
 
-    /**
-     * Main method.
-     *
-     * @param args <code>args[0]</code> is the class file name.
-     */
-    public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.err.println("Usage: java framedump <class file name>");
-            return;
-        }
+	/**
+	 * Main method.
+	 *
+	 * @param args
+	 *            <code>args[0]</code> is the class file name.
+	 */
+	public static void main(String[] args) throws Exception {
+		if (args.length != 1) {
+			System.err.println("Usage: java framedump <class file name>");
+			return;
+		}
 
-        org.hotswap.agent.javassist.ClassPool pool = org.hotswap.agent.javassist.ClassPool.getDefault();
-        org.hotswap.agent.javassist.CtClass clazz = pool.get(args[0]);
-        System.out.println("Frame Dump of " + clazz.getName() + ":");
-        FramePrinter.print(clazz, System.out);
-    }
+		org.hotswap.agent.javassist.ClassPool pool = org.hotswap.agent.javassist.ClassPool.getDefault();
+		org.hotswap.agent.javassist.CtClass clazz = pool.get(args[0]);
+		System.out.println("Frame Dump of " + clazz.getName() + ":");
+		FramePrinter.print(clazz, System.out);
+	}
 }

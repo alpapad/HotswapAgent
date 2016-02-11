@@ -96,7 +96,8 @@ public class TomcatPlugin {
      * Init plugin and resolve major version
      * @param version tomcat version string
      */
-    private void init(String version) {
+    @SuppressWarnings("unused")
+	private void init(String version) {
         LOGGER.info("Tomcat plugin initialized - Tomcat version '{}'", version);
         tomcatMajorVersion = resolveTomcatMajorVersion(version);
     }
@@ -230,7 +231,7 @@ public class TomcatPlugin {
      */
     private static String resolveTomcatVersion(ClassLoader appClassLoader) {
         try {
-            Class serverInfo = appClassLoader.loadClass("org.apache.catalina.util.ServerInfo");
+            Class<?> serverInfo = appClassLoader.loadClass("org.apache.catalina.util.ServerInfo");
             return (String) ReflectionHelper.invoke(null, serverInfo, "getServerNumber", new Class[]{});
         } catch (Exception e) {
             LOGGER.debug("Unable to resolve server version", e);

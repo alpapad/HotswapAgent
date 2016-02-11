@@ -15,7 +15,8 @@ import static org.junit.Assert.assertEquals;
 public class ClassLoaderDefineClassPatcherTest {
     //    @Test
     public void testWithoutPatch() throws Exception {
-        ClassLoader appClassLoader = new URLClassLoader(new URL[]{}, getClass().getClassLoader());
+        @SuppressWarnings("resource")
+		ClassLoader appClassLoader = new URLClassLoader(new URL[]{}, getClass().getClassLoader());
 
         assertEquals("Class created in parent classloader", getClass().getClassLoader(),
                 appClassLoader.loadClass(AnonymousClassInfo.class.getName()).getClassLoader());

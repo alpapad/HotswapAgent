@@ -15,11 +15,11 @@
  */
 package org.hotswap.agent.javassist.bytecode.annotation;
 
-import org.hotswap.agent.javassist.ClassPool;
-import org.hotswap.agent.javassist.bytecode.ConstPool;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
+
+import org.hotswap.agent.javassist.ClassPool;
+import org.hotswap.agent.javassist.bytecode.ConstPool;
 
 /**
  * Byte constant value.
@@ -28,77 +28,84 @@ import java.lang.reflect.Method;
  * @author Shigeru Chiba
  */
 public class ByteMemberValue extends MemberValue {
-    int valueIndex;
+	int valueIndex;
 
-    /**
-     * Constructs a byte constant value.  The initial value is specified
-     * by the constant pool entry at the given index.
-     *
-     * @param index the index of a CONSTANT_Integer_info structure.
-     */
-    public ByteMemberValue(int index, ConstPool cp) {
-        super('B', cp);
-        this.valueIndex = index;
-    }
+	/**
+	 * Constructs a byte constant value. The initial value is specified by the
+	 * constant pool entry at the given index.
+	 *
+	 * @param index
+	 *            the index of a CONSTANT_Integer_info structure.
+	 */
+	public ByteMemberValue(int index, ConstPool cp) {
+		super('B', cp);
+		this.valueIndex = index;
+	}
 
-    /**
-     * Constructs a byte constant value.
-     *
-     * @param b the initial value.
-     */
-    public ByteMemberValue(byte b, ConstPool cp) {
-        super('B', cp);
-        setValue(b);
-    }
+	/**
+	 * Constructs a byte constant value.
+	 *
+	 * @param b
+	 *            the initial value.
+	 */
+	public ByteMemberValue(byte b, ConstPool cp) {
+		super('B', cp);
+		setValue(b);
+	}
 
-    /**
-     * Constructs a byte constant value.  The initial value is 0.
-     */
-    public ByteMemberValue(ConstPool cp) {
-        super('B', cp);
-        setValue((byte) 0);
-    }
+	/**
+	 * Constructs a byte constant value. The initial value is 0.
+	 */
+	public ByteMemberValue(ConstPool cp) {
+		super('B', cp);
+		setValue((byte) 0);
+	}
 
-    Object getValue(ClassLoader cl, ClassPool cp, Method m) {
-        return new Byte(getValue());
-    }
+	@Override
+	Object getValue(ClassLoader cl, ClassPool cp, Method m) {
+		return new Byte(getValue());
+	}
 
-    Class getType(ClassLoader cl) {
-        return byte.class;
-    }
+	@Override
+	Class<?> getType(ClassLoader cl) {
+		return byte.class;
+	}
 
-    /**
-     * Obtains the value of the member.
-     */
-    public byte getValue() {
-        return (byte) cp.getIntegerInfo(valueIndex);
-    }
+	/**
+	 * Obtains the value of the member.
+	 */
+	public byte getValue() {
+		return (byte) cp.getIntegerInfo(valueIndex);
+	}
 
-    /**
-     * Sets the value of the member.
-     */
-    public void setValue(byte newValue) {
-        valueIndex = cp.addIntegerInfo(newValue);
-    }
+	/**
+	 * Sets the value of the member.
+	 */
+	public void setValue(byte newValue) {
+		valueIndex = cp.addIntegerInfo(newValue);
+	}
 
-    /**
-     * Obtains the string representation of this object.
-     */
-    public String toString() {
-        return Byte.toString(getValue());
-    }
+	/**
+	 * Obtains the string representation of this object.
+	 */
+	@Override
+	public String toString() {
+		return Byte.toString(getValue());
+	}
 
-    /**
-     * Writes the value.
-     */
-    public void write(AnnotationsWriter writer) throws IOException {
-        writer.constValueIndex(getValue());
-    }
+	/**
+	 * Writes the value.
+	 */
+	@Override
+	public void write(AnnotationsWriter writer) throws IOException {
+		writer.constValueIndex(getValue());
+	}
 
-    /**
-     * Accepts a visitor.
-     */
-    public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
-        visitor.visitByteMemberValue(this);
-    }
+	/**
+	 * Accepts a visitor.
+	 */
+	@Override
+	public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
+		visitor.visitByteMemberValue(this);
+	}
 }

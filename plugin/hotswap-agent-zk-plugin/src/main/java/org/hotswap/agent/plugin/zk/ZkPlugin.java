@@ -163,7 +163,7 @@ public class ZkPlugin {
 
                 Field afterComposeMethodCache = resolveClass("org.zkoss.bind.BindComposer").getDeclaredField("_afterComposeMethodCache");
                 afterComposeMethodCache.setAccessible(true);
-                ((Map)afterComposeMethodCache.get(null)).clear();
+                ((Map<?,?>)afterComposeMethodCache.get(null)).clear();
             } catch (Exception e) {
                 LOGGER.error("Error refreshing ZK BeanELResolver and BinderImpl caches.", e);
             }

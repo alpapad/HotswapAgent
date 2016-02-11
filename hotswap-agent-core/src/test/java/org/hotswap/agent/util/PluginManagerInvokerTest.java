@@ -43,12 +43,13 @@ public class PluginManagerInvokerTest {
     }
 
     // plugin registration is not public, use reflection to insert test data
-    private void registerPlugin(Object plugin) throws NoSuchFieldException, IllegalAccessException {
+    @SuppressWarnings("unchecked")
+	private void registerPlugin(Object plugin) throws NoSuchFieldException, IllegalAccessException {
         Field f = PluginRegistry.class.getDeclaredField("registeredPlugins");
         f.setAccessible(true);
         // noinspection unchecked
-        Map<Class, Map<ClassLoader, Object>> registeredPlugins =
-                (Map<Class, Map<ClassLoader, Object>>) f.get(PluginManager.getInstance().getPluginRegistry());
+        Map<Class<?>, Map<ClassLoader, Object>> registeredPlugins =
+                (Map<Class<?>, Map<ClassLoader, Object>>) f.get(PluginManager.getInstance().getPluginRegistry());
         registeredPlugins.put(plugin.getClass(), Collections.singletonMap(getClass().getClassLoader(), plugin));
     }
 }

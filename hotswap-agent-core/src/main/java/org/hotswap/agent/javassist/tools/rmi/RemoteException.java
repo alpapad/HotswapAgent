@@ -17,15 +17,20 @@
 package org.hotswap.agent.javassist.tools.rmi;
 
 /**
- * <code>RemoteException</code> represents any exception thrown
- * during remote method invocation.
+ * <code>RemoteException</code> represents any exception thrown during remote
+ * method invocation.
  */
 public class RemoteException extends RuntimeException {
-    public RemoteException(String msg) {
-        super(msg);
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public RemoteException(Exception e) {
-        super("by " + e.toString());
-    }
+	public RemoteException(String msg) {
+		super(msg);
+	}
+
+	public RemoteException(Exception e) {
+		super("by " + e.toString());
+	}
 }

@@ -26,37 +26,41 @@ import java.util.Map;
  * @since 3.11
  */
 public class LocalVariableTypeAttribute extends org.hotswap.agent.javassist.bytecode.LocalVariableAttribute {
-    /**
-     * The name of the attribute <code>"LocalVariableTypeTable"</code>.
-     */
-    public static final String tag = org.hotswap.agent.javassist.bytecode.LocalVariableAttribute.typeTag;
+	/**
+	 * The name of the attribute <code>"LocalVariableTypeTable"</code>.
+	 */
+	public static final String tag = org.hotswap.agent.javassist.bytecode.LocalVariableAttribute.typeTag;
 
-    /**
-     * Constructs an empty LocalVariableTypeTable.
-     */
-    public LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp) {
-        super(cp, tag, new byte[2]);
-        ByteArray.write16bit(0, info, 0);
-    }
+	/**
+	 * Constructs an empty LocalVariableTypeTable.
+	 */
+	public LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp) {
+		super(cp, tag, new byte[2]);
+		ByteArray.write16bit(0, info, 0);
+	}
 
-    LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp, int n, DataInputStream in)
-            throws IOException {
-        super(cp, n, in);
-    }
+	LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp, int n, DataInputStream in)
+			throws IOException {
+		super(cp, n, in);
+	}
 
-    private LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp, byte[] dest) {
-        super(cp, tag, dest);
-    }
+	private LocalVariableTypeAttribute(org.hotswap.agent.javassist.bytecode.ConstPool cp, byte[] dest) {
+		super(cp, tag, dest);
+	}
 
-    String renameEntry(String desc, String oldname, String newname) {
-        return org.hotswap.agent.javassist.bytecode.SignatureAttribute.renameClass(desc, oldname, newname);
-    }
+	@Override
+	String renameEntry(String desc, String oldname, String newname) {
+		return org.hotswap.agent.javassist.bytecode.SignatureAttribute.renameClass(desc, oldname, newname);
+	}
 
-    String renameEntry(String desc, Map classnames) {
-        return org.hotswap.agent.javassist.bytecode.SignatureAttribute.renameClass(desc, classnames);
-    }
+	@Override
+	String renameEntry(String desc, Map<String, String> classnames) {
+		return org.hotswap.agent.javassist.bytecode.SignatureAttribute.renameClass(desc, classnames);
+	}
 
-    org.hotswap.agent.javassist.bytecode.LocalVariableAttribute makeThisAttr(org.hotswap.agent.javassist.bytecode.ConstPool cp, byte[] dest) {
-        return new LocalVariableTypeAttribute(cp, dest);
-    }
+	@Override
+	org.hotswap.agent.javassist.bytecode.LocalVariableAttribute makeThisAttr(
+			org.hotswap.agent.javassist.bytecode.ConstPool cp, byte[] dest) {
+		return new LocalVariableTypeAttribute(cp, dest);
+	}
 }

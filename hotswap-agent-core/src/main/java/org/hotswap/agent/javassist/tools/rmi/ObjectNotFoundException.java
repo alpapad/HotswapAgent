@@ -17,11 +17,16 @@
 package org.hotswap.agent.javassist.tools.rmi;
 
 public class ObjectNotFoundException extends Exception {
-    public ObjectNotFoundException(String name) {
-        super(name + " is not exported");
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public ObjectNotFoundException(String name, Exception e) {
-        super(name + " because of " + e.toString());
-    }
+	public ObjectNotFoundException(String name) {
+		super(name + " is not exported");
+	}
+
+	public ObjectNotFoundException(String name, Exception e) {
+		super(name + " because of " + e.toString());
+	}
 }

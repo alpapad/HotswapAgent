@@ -26,77 +26,84 @@ import java.lang.reflect.Method;
  * @author Shigeru Chiba
  */
 public class CharMemberValue extends MemberValue {
-    int valueIndex;
+	int valueIndex;
 
-    /**
-     * Constructs a char constant value.  The initial value is specified
-     * by the constant pool entry at the given index.
-     *
-     * @param index the index of a CONSTANT_Integer_info structure.
-     */
-    public CharMemberValue(int index, org.hotswap.agent.javassist.bytecode.ConstPool cp) {
-        super('C', cp);
-        this.valueIndex = index;
-    }
+	/**
+	 * Constructs a char constant value. The initial value is specified by the
+	 * constant pool entry at the given index.
+	 *
+	 * @param index
+	 *            the index of a CONSTANT_Integer_info structure.
+	 */
+	public CharMemberValue(int index, org.hotswap.agent.javassist.bytecode.ConstPool cp) {
+		super('C', cp);
+		this.valueIndex = index;
+	}
 
-    /**
-     * Constructs a char constant value.
-     *
-     * @param c the initial value.
-     */
-    public CharMemberValue(char c, org.hotswap.agent.javassist.bytecode.ConstPool cp) {
-        super('C', cp);
-        setValue(c);
-    }
+	/**
+	 * Constructs a char constant value.
+	 *
+	 * @param c
+	 *            the initial value.
+	 */
+	public CharMemberValue(char c, org.hotswap.agent.javassist.bytecode.ConstPool cp) {
+		super('C', cp);
+		setValue(c);
+	}
 
-    /**
-     * Constructs a char constant value.  The initial value is '\0'.
-     */
-    public CharMemberValue(org.hotswap.agent.javassist.bytecode.ConstPool cp) {
-        super('C', cp);
-        setValue('\0');
-    }
+	/**
+	 * Constructs a char constant value. The initial value is '\0'.
+	 */
+	public CharMemberValue(org.hotswap.agent.javassist.bytecode.ConstPool cp) {
+		super('C', cp);
+		setValue('\0');
+	}
 
-    Object getValue(ClassLoader cl, org.hotswap.agent.javassist.ClassPool cp, Method m) {
-        return new Character(getValue());
-    }
+	@Override
+	Object getValue(ClassLoader cl, org.hotswap.agent.javassist.ClassPool cp, Method m) {
+		return new Character(getValue());
+	}
 
-    Class getType(ClassLoader cl) {
-        return char.class;
-    }
+	@Override
+	Class<?> getType(ClassLoader cl) {
+		return char.class;
+	}
 
-    /**
-     * Obtains the value of the member.
-     */
-    public char getValue() {
-        return (char) cp.getIntegerInfo(valueIndex);
-    }
+	/**
+	 * Obtains the value of the member.
+	 */
+	public char getValue() {
+		return (char) cp.getIntegerInfo(valueIndex);
+	}
 
-    /**
-     * Sets the value of the member.
-     */
-    public void setValue(char newValue) {
-        valueIndex = cp.addIntegerInfo(newValue);
-    }
+	/**
+	 * Sets the value of the member.
+	 */
+	public void setValue(char newValue) {
+		valueIndex = cp.addIntegerInfo(newValue);
+	}
 
-    /**
-     * Obtains the string representation of this object.
-     */
-    public String toString() {
-        return Character.toString(getValue());
-    }
+	/**
+	 * Obtains the string representation of this object.
+	 */
+	@Override
+	public String toString() {
+		return Character.toString(getValue());
+	}
 
-    /**
-     * Writes the value.
-     */
-    public void write(AnnotationsWriter writer) throws IOException {
-        writer.constValueIndex(getValue());
-    }
+	/**
+	 * Writes the value.
+	 */
+	@Override
+	public void write(AnnotationsWriter writer) throws IOException {
+		writer.constValueIndex(getValue());
+	}
 
-    /**
-     * Accepts a visitor.
-     */
-    public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
-        visitor.visitCharMemberValue(this);
-    }
+	/**
+	 * Accepts a visitor.
+	 */
+	@Override
+	public void accept(org.hotswap.agent.javassist.bytecode.annotation.MemberValueVisitor visitor) {
+		visitor.visitCharMemberValue(this);
+	}
 }

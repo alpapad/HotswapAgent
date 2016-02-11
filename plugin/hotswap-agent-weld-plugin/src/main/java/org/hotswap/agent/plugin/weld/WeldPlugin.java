@@ -169,7 +169,7 @@ public class WeldPlugin {
      * @param original
      */
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void classReload(ClassLoader classLoader, CtClass ctClass, Class original) {
+    public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
         if (!isSyntheticWeldClass(ctClass.getName()) && original != null) {
             try {
                 String archivePath = getArchivePath(ctClass);

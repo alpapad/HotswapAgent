@@ -20,20 +20,26 @@ package org.hotswap.agent.javassist.tools.web;
  * Thrown when receiving an invalid HTTP request.
  */
 public class BadHttpRequest extends Exception {
-    private Exception e;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	private Exception e;
 
-    public BadHttpRequest() {
-        e = null;
-    }
+	public BadHttpRequest() {
+		e = null;
+	}
 
-    public BadHttpRequest(Exception _e) {
-        e = _e;
-    }
+	public BadHttpRequest(Exception _e) {
+		e = _e;
+	}
 
-    public String toString() {
-        if (e == null)
-            return super.toString();
-        else
-            return e.toString();
-    }
+	@Override
+	public String toString() {
+		if (e == null) {
+			return super.toString();
+		} else {
+			return e.toString();
+		}
+	}
 }

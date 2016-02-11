@@ -61,9 +61,9 @@ public class ELResolverPlugin {
         if (checkJuelEL(ctClass)) {
             found = true;
             LOGGER.debug("JuelEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
-        } else if (checkApacheEL(ctClass)) {
+        } else if (checkApacheCommonsEL(ctClass)) {
             found = true;
-            LOGGER.debug("ApacheEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.debug("ApacheCommonsEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         } else if (checkJBoss_3_0_EL(ctClass)) {
             found = true;
             LOGGER.debug("JBossEL 3.0 - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
@@ -80,7 +80,7 @@ public class ELResolverPlugin {
         try {
             // JUEL, (JSF BeanELResolver[s])
             // check if we have purgeBeanClasses method
-            CtMethod purgeMeth = ctClass.getDeclaredMethod("purgeBeanClasses");
+            ctClass.getDeclaredMethod("purgeBeanClasses");
             ctClass.addMethod(CtNewMethod.make("public void " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader) {" +
                     "   java.beans.Introspector.flushCaches(); " +
                     "   purgeBeanClasses(classLoader); " +
@@ -93,11 +93,12 @@ public class ELResolverPlugin {
 
     }
 
-    private static boolean checkApacheEL(CtClass ctClass)
+    private static boolean checkApacheCommonsEL(CtClass ctClass)
     {
         try {
-            CtField field = ctClass.getField("cache");
-            // Apache BeanELResolver (has cache property)
+            ctClass.getField("cache");
+            
+            // Apache Commons BeanELResolver (has cache property)
             ctClass.addField(new CtField(CtClass.booleanType, "__purgeRequested", ctClass), CtField.Initializer.constant(false));
 
             ctClass.addMethod(CtNewMethod.make("public void " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader) {" +

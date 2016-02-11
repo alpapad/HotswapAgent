@@ -20,22 +20,28 @@ package org.hotswap.agent.javassist.compiler.ast;
  * Variable.
  */
 public class Variable extends Symbol {
-    protected Declarator declarator;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
+	protected Declarator declarator;
 
-    public Variable(String sym, Declarator d) {
-        super(sym);
-        declarator = d;
-    }
+	public Variable(String sym, Declarator d) {
+		super(sym);
+		declarator = d;
+	}
 
-    public Declarator getDeclarator() {
-        return declarator;
-    }
+	public Declarator getDeclarator() {
+		return declarator;
+	}
 
-    public String toString() {
-        return identifier + ":" + declarator.getType();
-    }
+	@Override
+	public String toString() {
+		return identifier + ":" + declarator.getType();
+	}
 
-    public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
-        v.atVariable(this);
-    }
+	@Override
+	public void accept(Visitor v) throws org.hotswap.agent.javassist.compiler.CompileError {
+		v.atVariable(this);
+	}
 }

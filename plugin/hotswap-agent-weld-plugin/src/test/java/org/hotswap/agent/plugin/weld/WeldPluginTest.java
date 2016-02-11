@@ -38,7 +38,8 @@ public class WeldPluginTest {
 
     public <T> T getBean(Class<T> beanClass) {
         BeanManager beanManager = CDI.current().getBeanManager();
-        Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass));
+        @SuppressWarnings("unchecked")
+		Bean<T> bean = (Bean<T>) beanManager.resolve(beanManager.getBeans(beanClass));
         T result = beanManager.getContext(bean.getScope()).get(bean, beanManager.createCreationalContext(bean));
         return result;
     }
@@ -181,7 +182,7 @@ public class WeldPluginTest {
         for (BeanDeploymentArchiveAgent instance : instances) {
             System.out.println(instance.getBdaId());
             //create new class and class file. rerun test only after clean
-            Class newClass = HotSwapper.newClass("NewClass", instance.getBdaId(), getClass().getClassLoader());
+            Class<?> newClass = HotSwapper.newClass("NewClass", instance.getBdaId(), getClass().getClassLoader());
             URL resource = newClass.getClassLoader().getResource("NewClass.class");
             System.out.println(resource);
             Thread.sleep(1000); // wait redefine
@@ -192,7 +193,7 @@ public class WeldPluginTest {
         WeldPlugin.IS_TEST_ENVIRONMENT = false;
     }
 
-    private void swapClasses(Class original, String swap) throws Exception {
+    private void swapClasses(Class<?> original, String swap) throws Exception {
         BeanDeploymentArchiveAgent.reloadFlag = true;
         HotSwapper.swapClasses(original, swap);
         assertTrue(WaitHelper.waitForCommand(new WaitHelper.Command() {

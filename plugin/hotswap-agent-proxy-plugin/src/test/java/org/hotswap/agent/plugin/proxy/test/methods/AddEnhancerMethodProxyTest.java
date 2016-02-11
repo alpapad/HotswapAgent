@@ -86,10 +86,11 @@ public class AddEnhancerMethodProxyTest {
 		__toVersion__Delayed(1);
 		
 		Method method = getMethod(a, "getValue2");
-		assertEquals(2, method.invoke(a, null));
+		assertEquals(2, method.invoke(a, (Object[])null));
 	}
 	
 	public static class SerializableNoOp implements Serializable, MethodInterceptor {
+		private static final long serialVersionUID = 1L;
 		private int count;
 		private AImpl obj = new AImpl();
 		
@@ -121,14 +122,14 @@ public class AddEnhancerMethodProxyTest {
 		Method method = getMethod(a, "getValue2");
 		assertEquals("getValue2", method.getName());
 		assertEquals(1, cb.getInvocationCount());
-		assertEquals(2, method.invoke(a, null));
+		assertEquals(2, method.invoke(a, (Object[])null));
 		assertEquals(2, cb.getInvocationCount());
 		
 		__toVersion__Delayed(2);
 		method = getMethod(a, "getValue3");
 		assertEquals("getValue3", method.getName());
 		assertEquals(2, cb.getInvocationCount());
-		assertEquals(3, method.invoke(a, null));
+		assertEquals(3, method.invoke(a, (Object[])null));
 		assertEquals(3, cb.getInvocationCount());
 	}
 	
@@ -158,7 +159,7 @@ public class AddEnhancerMethodProxyTest {
 		Method method = getMethod(a, "getValue2");
 		assertEquals("getValue2", method.getName());
 		assertEquals(1, cb.getInvocationCount());
-		assertEquals(2, method.invoke(a, null));
+		assertEquals(2, method.invoke(a, (Object[])null));
 		assertEquals(2, cb.getInvocationCount());
 	}
 	

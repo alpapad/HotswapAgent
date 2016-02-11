@@ -25,7 +25,7 @@ public class AgentLoggerHandlerTest {
         handler.setPrintStream(printStream);
 
         context.checking(new Expectations() {{
-            oneOf(printStream).println(with(new StringContains("DEBUG (org.hotswap.agent.config.PluginManager) - A 1 B 2 C 3")));
+            oneOf(printStream).println(with(new StringContains("DEBUG (PluginManager) - A 1 B 2 C 3")));
         }});
 
         handler.print(PluginManager.class, AgentLogger.Level.DEBUG, "A {} B {} C {}", null, "1", 2, 3L);

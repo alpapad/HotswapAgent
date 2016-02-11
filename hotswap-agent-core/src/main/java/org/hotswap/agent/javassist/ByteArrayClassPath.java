@@ -22,80 +22,88 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * A <code>ByteArrayClassPath</code> contains bytes that is served as
- * a class file to a <code>ClassPool</code>.  It is useful to convert
- * a byte array to a <code>CtClass</code> object.
- * <p/>
- * <p>For example, if you want to convert a byte array <code>b</code>
- * into a <code>CtClass</code> object representing the class with a name
+ * A <code>ByteArrayClassPath</code> contains bytes that is served as a class
+ * file to a <code>ClassPool</code>. It is useful to convert a byte array to a
+ * <code>CtClass</code> object.
+ *
+ * <p>
+ * For example, if you want to convert a byte array <code>b</code> into a
+ * <code>CtClass</code> object representing the class with a name
  * <code>classname</code>, then do as following:
- * <p/>
- * <ul><pre>
+ *
+ * <pre>
  * ClassPool cp = ClassPool.getDefault();
  * cp.insertClassPath(new ByteArrayClassPath(classname, b));
  * CtClass cc = cp.get(classname);
- * </pre></ul>
- * <p/>
- * <p>The <code>ClassPool</code> object <code>cp</code> uses the created
- * <code>ByteArrayClassPath</code> object as the source of the class file.
- * <p/>
- * <p>A <code>ByteArrayClassPath</code> must be instantiated for every
- * class.  It contains only a single class file.
+ * </pre>
  *
- * @see ClassPath
+ * <p>
+ * The <code>ClassPool</code> object <code>cp</code> uses the created
+ * <code>ByteArrayClassPath</code> object as the source of the class file.
+ *
+ * <p>
+ * A <code>ByteArrayClassPath</code> must be instantiated for every class. It
+ * contains only a single class file.
+ *
+ * @see org.hotswap.agent.javassist.ClassPath
  * @see ClassPool#insertClassPath(ClassPath)
  * @see ClassPool#appendClassPath(ClassPath)
  * @see ClassPool#makeClass(InputStream)
  */
 public class ByteArrayClassPath implements ClassPath {
-    protected String classname;
-    protected byte[] classfile;
+	protected String classname;
+	protected byte[] classfile;
 
-    /*
-     * Creates a <code>ByteArrayClassPath</code> containing the given
-     * bytes.
-     *
-     * @param name              a fully qualified class name
-     * @param classfile         the contents of a class file.
-     */
-    public ByteArrayClassPath(String name, byte[] classfile) {
-        this.classname = name;
-        this.classfile = classfile;
-    }
+	/*
+	 * Creates a <code>ByteArrayClassPath</code> containing the given bytes.
+	 *
+	 * @param name a fully qualified class name
+	 *
+	 * @param classfile the contents of a class file.
+	 */
+	public ByteArrayClassPath(String name, byte[] classfile) {
+		this.classname = name;
+		this.classfile = classfile;
+	}
 
-    /**
-     * Closes this class path.
-     */
-    public void close() {
-    }
+	/**
+	 * Closes this class path.
+	 */
+	@Override
+	public void close() {
+	}
 
-    public String toString() {
-        return "byte[]:" + classname;
-    }
+	@Override
+	public String toString() {
+		return "byte[]:" + classname;
+	}
 
-    /**
-     * Opens the class file.
-     */
-    public InputStream openClassfile(String classname) {
-        if (this.classname.equals(classname))
-            return new ByteArrayInputStream(classfile);
-        else
-            return null;
-    }
+	/**
+	 * Opens the class file.
+	 */
+	@Override
+	public InputStream openClassfile(String classname) {
+		if (this.classname.equals(classname)) {
+			return new ByteArrayInputStream(classfile);
+		} else {
+			return null;
+		}
+	}
 
-    /**
-     * Obtains the URL.
-     */
-    public URL find(String classname) {
-        if (this.classname.equals(classname)) {
-            String cname = classname.replace('.', '/') + ".class";
-            try {
-                // return new File(cname).toURL();
-                return new URL("file:/ByteArrayClassPath/" + cname);
-            } catch (MalformedURLException e) {
-            }
-        }
+	/**
+	 * Obtains the URL.
+	 */
+	@Override
+	public URL find(String classname) {
+		if (this.classname.equals(classname)) {
+			String cname = classname.replace('.', '/') + ".class";
+			try {
+				// return new File(cname).toURL();
+				return new URL("file:/ByteArrayClassPath/" + cname);
+			} catch (MalformedURLException e) {
+			}
+		}
 
-        return null;
-    }
+		return null;
+	}
 }
