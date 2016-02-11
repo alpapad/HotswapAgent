@@ -28,7 +28,7 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-spring-plugin</artifactId>
             <version>${project.version}</version>
@@ -62,7 +62,7 @@
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-logback-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency>
             <groupId>org.hotswap.agent</groupId>
@@ -70,11 +70,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-seam-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency>
             <groupId>org.hotswap.agent</groupId>
@@ -82,11 +82,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-osgiequinox-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency>
             <groupId>org.hotswap.agent</groupId>
@@ -94,11 +94,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-webobjects-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency>
             <groupId>org.hotswap.agent</groupId>
@@ -118,11 +118,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
 	    <artifactId>hotswap-agent-gae-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <dependency>
             <groupId>org.pegdown</groupId>

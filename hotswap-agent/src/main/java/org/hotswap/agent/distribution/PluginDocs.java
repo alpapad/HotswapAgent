@@ -43,7 +43,7 @@ public class PluginDocs {
      * @param clazz class to use
      * @return base path (e.g. file:/J:/HotswapAgent/HibernatePlugin)
      */
-    public static String getBaseURL(Class clazz) {
+    public static String getBaseURL(Class<?> clazz) {
         String clazzUrl = clazz.getResource(clazz.getSimpleName() + ".class").toString();
 
         // strip path to the plugin from maven root directory
@@ -62,7 +62,7 @@ public class PluginDocs {
         ClassPathAnnotationScanner scanner = new ClassPathAnnotationScanner(Plugin.class.getName(), new ClassPathScanner());
 
         for (String plugin : scanner.scanPlugins(getClass().getClassLoader(), PluginManager.PLUGIN_PACKAGE.replace(".", "/"))) {
-            Class pluginClass = Class.forName(plugin);
+            Class<?> pluginClass = Class.forName(plugin);
             Plugin pluginAnnotation = (Plugin) pluginClass.getAnnotation(Plugin.class);
 
             String pluginName = pluginAnnotation.name();

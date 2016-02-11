@@ -26,7 +26,7 @@ public class MarkdownProcessor {
      * @param targetFile file where to save HTML
      * @return true if documentation is resolved and created
      */
-    public boolean processPlugin(Class plugin, URL targetFile) {
+    public boolean processPlugin(Class<?> plugin, URL targetFile) {
         String markdown = resolveMarkdownDoc(plugin);
         if (markdown == null)
             return false;
@@ -68,7 +68,7 @@ public class MarkdownProcessor {
      * @param plugin plugin class
      * @return the content of README.md or null (if no documentation exists)
      */
-    public String resolveMarkdownDoc(Class plugin) {
+    public String resolveMarkdownDoc(Class<?> plugin) {
         InputStream is = resolveSamePackageReadme(plugin);
 
         if (is == null) {
@@ -82,13 +82,13 @@ public class MarkdownProcessor {
     }
 
     // find README.md in a same package as the plugin. If found, it has precedence before main plugin documentation
-    private InputStream resolveSamePackageReadme(Class plugin) {
+    private InputStream resolveSamePackageReadme(Class<?> plugin) {
         // locate in the same package
         return plugin.getResourceAsStream("README.md");
     }
 
     // find README.md in file e.g. 'file:/J:/HotswapAgent/HotswapAgent/README.md'
-    private InputStream resolveMavenMainDirectoryReadme(Class plugin) {
+    private InputStream resolveMavenMainDirectoryReadme(Class<?> plugin) {
         try {
             URI uri = new URI(PluginDocs.getBaseURL(plugin) + "/README.md");
             if (uri.toString().endsWith("/HotswapAgent/README.md")) {
