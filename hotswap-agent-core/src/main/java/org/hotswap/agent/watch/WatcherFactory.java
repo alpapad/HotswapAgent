@@ -2,7 +2,8 @@ package org.hotswap.agent.watch;
 
 import java.io.IOException;
 
-import org.hotswap.agent.watch.nio.WatcherNIO2;
+import org.hotswap.agent.watch.nio.TreeWatcherNIO;
+//import org.hotswap.agent.watch.nio.WatcherNIO2;
 
 /**
  * Resolve watcher from java version (Java NIO2 implementation is preferred if
@@ -27,7 +28,7 @@ public class WatcherFactory {
 
 	public Watcher getWatcher() throws IOException {
 		if (JAVA_VERSION >= 1.7) {
-			return new WatcherNIO2();
+			return new TreeWatcherNIO();
 		} else {
 			throw new UnsupportedOperationException("Watcher is implemented only for Java 1.7 (NIO2). "
 					+ "JNotify implementation should be added in the future for older Java version support.");

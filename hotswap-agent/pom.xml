@@ -22,11 +22,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
             <artifactId>hotswap-agent-hibernate-plugin</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency -->
 
         <!-- dependency>
             <groupId>org.hotswap.agent</groupId>

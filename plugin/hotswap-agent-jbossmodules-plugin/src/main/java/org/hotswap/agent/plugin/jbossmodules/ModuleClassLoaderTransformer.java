@@ -28,17 +28,17 @@ public class ModuleClassLoaderTransformer {
     @OnClassLoadEvent(classNameRegexp = "org.jboss.modules.ModuleClassLoader")
     public static void patchModuleClassLoader(ClassPool classPool, CtClass ctClass) throws CannotCompileException {
         try {
-            CtField pathField = ctClass.getDeclaredField("paths");
-            CtClass pathsType = pathField.getType();
-            String pathsGetter = "";
+            //CtField pathField = ctClass.getDeclaredField("paths");
+            //CtClass pathsType = pathField.getType();
+            //String pathsGetter = "";
 
             CtClass ctHaClassLoader = classPool.get(HotswapAgentClassLoaderExt.class.getName());
             ctClass.addInterface(ctHaClassLoader);
 
-            if ("java.util.concurrent.atomic.AtomicReference".equals(pathsType.getName())) {
-                // version>=1.5
-                pathsGetter = ".get()";
-            }
+//            if ("java.util.concurrent.atomic.AtomicReference".equals(pathsType.getName())) {
+//                // version>=1.5
+//                pathsGetter = ".get()";
+//            }
 
             CtClass objectClass = classPool.get(Object.class.getName());
             CtField ctField = new CtField(objectClass, "__prepend", ctClass);
@@ -48,7 +48,7 @@ public class ModuleClassLoaderTransformer {
                     "private void __setupPrepend() {" +
                     "       Class clPaths = Class.forName(\"org.jboss.modules.Paths\", true, this.getClass().getClassLoader());" +
                     "       java.lang.reflect.Method spM  = clPaths.getDeclaredMethod(\"__setPrepend\", new Class[] {java.lang.Object.class});" +
-                    "       spM.invoke(this.paths" + pathsGetter + ", new java.lang.Object[] { __prepend });"+
+                    "       spM.invoke(this.paths.get(), new java.lang.Object[] { __prepend });"+
                     "}", ctClass)
             );
 
@@ -76,21 +76,24 @@ public class ModuleClassLoaderTransformer {
             );
 
             CtMethod methRecalculate = ctClass.getDeclaredMethod("recalculate");
-            methRecalculate.setBody(
-                    "{" +
-                    "   final org.jboss.modules.Paths p = this.paths" + pathsGetter + ";" +
-                    "   boolean ret = setResourceLoaders(p, (org.jboss.modules.ResourceLoaderSpec[])p.getSourceList(NO_RESOURCE_LOADERS));" +
-                    "   __setupPrepend();" +
-                    "   return ret;" +
-                    "}"
-            );
+            methRecalculate.setName("_recalculate");
+            
+            ctClass.addMethod(CtNewMethod.make("boolean recalculate() {boolean ret=_recalculate(); __setupPrepend();return ret;}", ctClass));
+//            methRecalculate.setBody(
+//                    "{" +
+//                    "   final org.jboss.modules.Paths p = this.paths.get();" +
+//                    "   boolean ret = setResourceLoaders(p, (org.jboss.modules.ResourceLoaderSpec[])p.getSourceList(NO_RESOURCE_LOADERS));" +
+//                    "   __setupPrepend();" +
+//                    "   return ret;" +
+//                    "}"
+//            );
 
             CtClass ctResLoadClass = classPool.get("org.jboss.modules.ResourceLoaderSpec[]");
 
             CtMethod methResourceLoaders = ctClass.getDeclaredMethod("setResourceLoaders", new CtClass[] { ctResLoadClass });
             methResourceLoaders.setBody(
                     "{" +
-                    "   boolean ret = setResourceLoaders(this.paths" + pathsGetter + ", $1);" +
+                    "   boolean ret = setResourceLoaders((org.jboss.modules.Paths)this.paths.get(), $1);" +
                     "   __setupPrepend();" +
                     "   return ret;" +
                     "}"
@@ -98,6 +101,7 @@ public class ModuleClassLoaderTransformer {
 
         } catch (NotFoundException e) {
             LOGGER.warning("Unable to find field \"paths\" in org.jboss.modules.ModuleClassLoader.");
+            e.printStackTrace();
         }
     }
 
