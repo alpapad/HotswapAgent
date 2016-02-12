@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.hotswap.agent.watch.nio.TreeWatcherNIO;
 //import org.hotswap.agent.watch.nio.WatcherNIO2;
+import org.hotswap.agent.watch.nio.WatcherNIO2;
 
 /**
  * Resolve watcher from java version (Java NIO2 implementation is preferred if
@@ -26,9 +27,16 @@ public class WatcherFactory {
 		return Double.parseDouble(version.substring(0, pos - 1));
 	}
 
+	static boolean isWindows(){
+		return  System.getProperty("os.name").startsWith("Windows");
+	}
 	public Watcher getWatcher() throws IOException {
 		if (JAVA_VERSION >= 1.7) {
-			return new TreeWatcherNIO();
+			if(isWindows()){
+				return new TreeWatcherNIO();
+			} else {
+				return new WatcherNIO2();
+			}
 		} else {
 			throw new UnsupportedOperationException("Watcher is implemented only for Java 1.7 (NIO2). "
 					+ "JNotify implementation should be added in the future for older Java version support.");

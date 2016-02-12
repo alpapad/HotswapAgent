@@ -48,29 +48,29 @@ public class ELResolverPlugin {
     @OnClassLoadEvent(classNameRegexp = "javax.el.BeanELResolver")
     public static void beanELResolverRegisterVariable(CtClass ctClass) throws CannotCompileException {
 
-        String initPlugin = PluginManagerInvoker.buildInitializePlugin(ELResolverPlugin.class);
-        String registerThis = PluginManagerInvoker.buildCallPluginMethod(ELResolverPlugin.class, "registerBeanELResolver",
-                "this", "java.lang.Object");
-
-        for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-            constructor.insertAfter(initPlugin);
-            constructor.insertAfter(registerThis);
-        }
-
         boolean found = false;
         if (checkJuelEL(ctClass)) {
             found = true;
-            LOGGER.debug("JuelEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.error("JuelEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         } else if (checkApacheEL(ctClass)) {
             found = true;
-            LOGGER.debug("ApacheEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.error("ApacheEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         } else if (checkJBoss_3_0_EL(ctClass)) {
             found = true;
-            LOGGER.debug("JBossEL 3.0 - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.error("JBossEL 3.0 - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         }
 
         if (!found) {
             LOGGER.warning("Unable to add javax.el.BeanELResolver." + PURGE_CLASS_CACHE_METHOD_NAME + "() method. Purging will not be available.");
+        } else {
+            String initPlugin = PluginManagerInvoker.buildInitializePlugin(ELResolverPlugin.class);
+            String registerThis = PluginManagerInvoker.buildCallPluginMethod(ELResolverPlugin.class, "registerBeanELResolver",
+                    "this", "java.lang.Object");
+
+            for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+                constructor.insertAfter(initPlugin);
+                constructor.insertAfter(registerThis);
+            }
         }
     }
 
