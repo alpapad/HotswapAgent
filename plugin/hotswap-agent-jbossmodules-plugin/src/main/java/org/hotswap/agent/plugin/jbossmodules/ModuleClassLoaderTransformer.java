@@ -100,8 +100,7 @@ public class ModuleClassLoaderTransformer {
             );
 
         } catch (NotFoundException e) {
-            LOGGER.warning("Unable to find field \"paths\" in org.jboss.modules.ModuleClassLoader.");
-            e.printStackTrace();
+            LOGGER.warning("Unable to find field \"paths\" in org.jboss.modules.ModuleClassLoader.", e);
         }
     }
 
@@ -137,7 +136,7 @@ public class ModuleClassLoaderTransformer {
                     "}", ctClass)
             );
         } catch (NotFoundException e) {
-            LOGGER.warning("Unable to find methos \"getAllPaths()\" in org.jboss.modules.Paths.");
+            LOGGER.warning("Unable to find methos \"getAllPaths()\" in org.jboss.modules.Paths.", e);
         }
     }
 
