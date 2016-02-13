@@ -44,12 +44,12 @@ public class WildFlyELResolverPlugin {
            		 PluginManagerInvoker.buildInitializePlugin(WildFlyELResolverPlugin.class,"$$cl")
        		);
         }
-        LOGGER.error("Patched JbossELResolver");
+        LOGGER.info("Patched JbossELResolver");
     }
 
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void invalidateClassCache(ClassLoader appClassLoader) throws Exception {
-    	LOGGER.error("Running invalidateClassCache {}", appClassLoader);
+    	LOGGER.trace("Running invalidateClassCache {}", appClassLoader);
     	PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader);
         scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
     }

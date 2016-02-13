@@ -24,7 +24,7 @@ public class PurgeWildFlyBeanELResolverCacheCommand extends MergeableCommand {
 	@Override
 	public void executeCommand() {
 		try {
-			LOGGER.error("Cleaning  BeanPropertiesCache {}.",appClassLoader);
+			LOGGER.trace("Cleaning  BeanPropertiesCache {}.",appClassLoader);
 			Method beanElResolverMethod = resolveClass("org.jboss.el.cache.BeanPropertiesCache").getDeclaredMethod("clear", ClassLoader.class);
 			beanElResolverMethod.setAccessible(true);
 			beanElResolverMethod.invoke(null, appClassLoader);
@@ -32,7 +32,7 @@ public class PurgeWildFlyBeanELResolverCacheCommand extends MergeableCommand {
 			LOGGER.error("Error cleaning BeanPropertiesCache. {}", e, appClassLoader);
 		}
 		try {
-			LOGGER.error("Cleaning  FactoryFinderCache {}.",appClassLoader);
+			LOGGER.trace("Cleaning  FactoryFinderCache {}.",appClassLoader);
 			Method beanElResolverMethod = resolveClass("org.jboss.el.cache.FactoryFinderCache")
 					.getDeclaredMethod("clearClassLoader", ClassLoader.class);
 			beanElResolverMethod.setAccessible(true);
