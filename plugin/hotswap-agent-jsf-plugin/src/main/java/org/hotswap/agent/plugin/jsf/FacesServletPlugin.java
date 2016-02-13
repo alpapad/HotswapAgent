@@ -18,113 +18,121 @@ import org.hotswap.agent.annotation.OnResourceFileEvent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.MergeableCommand;
 import org.hotswap.agent.command.Scheduler;
+import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
 import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
-@Plugin(name = "FacesServletPlugin", description = "JSF 2.2 Copy .xml, .properties and .xhtml files", testedVersions = {
-		"2.2" }, expectedVersions = { "2.2" })
+/**
+ * JSF 2.2 Copy faces files to web-app exploaded directory in server
+ * 
+ * @author alpapad
+ */
+@Plugin(name = "FacesServletPlugin",  //
+		description = "JSF 2.2 Copy faces files to web-app exploaded directory in server", //
+		testedVersions = {"2.2" }, //
+		expectedVersions = { "2.2" })
 public class FacesServletPlugin {
 	private static AgentLogger LOGGER = AgentLogger.getLogger(FacesServletPlugin.class);
 
 	private String realPath;
 
-    private Set<String> pending = new LinkedHashSet<>();
+	private Set<String> pending = new LinkedHashSet<>();
 
-    @Init
-    Scheduler scheduler;
+	@Init
+	Scheduler scheduler;
 
-    @Init
-    ClassLoader appClassLoader;
+	@Init
+	ClassLoader appClassLoader;
 
+	@Init
+	PluginConfiguration pluginConfiguration;
 
-    @Init
-    PluginConfiguration pluginConfiguration;
-    
-    
 	@OnClassLoadEvent(classNameRegexp = "javax.faces.webapp.FacesServlet")
-	public static void facesConfigManagerInitialized(ClassPool classPool, CtClass ctClass) throws NotFoundException, CannotCompileException {
-		LOGGER.error("FacesServletPlugin, patching javax.faces.webapp.FacesServlet");
-		ctClass.getDeclaredMethod("init", new CtClass[] { classPool.get("javax.servlet.ServletConfig") })
-				.insertAfter(
-						"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();"
-						+ PluginManagerInvoker.buildInitializePlugin(FacesServletPlugin.class,"$$cl")
-						+ "java.lang.String $$RealPath = servletConfig.getServletContext().getRealPath(\"/\");"
-						+ PluginManagerInvoker.buildCallPluginMethod("$$cl",FacesServletPlugin.class, "setRealPath", "$$RealPath", "java.lang.String"));
+	public static void patchFacesServlet(ClassPool classPool, CtClass ctClass) {
+		try {
+			ctClass.getDeclaredMethod("init", new CtClass[] { classPool.get("javax.servlet.ServletConfig") })
+					.insertAfter(//
+							"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();"//
+							+ PluginManagerInvoker.buildInitializePlugin(FacesServletPlugin.class, "$$cl")//
+							+ "java.lang.String $$RealPath = servletConfig.getServletContext().getRealPath(\"/\");"//
+							+ PluginManagerInvoker.buildCallPluginMethod("$$cl", FacesServletPlugin.class, "setRealPath", "$$RealPath", "java.lang.String")//
+							+ ApplyFacesDevParams.class.getName()+ ".apply(servletConfig.getServletContext());"//
+					);
+			
+			LOGGER.info("FacesServletPlugin, patched javax.faces.webapp.FacesServlet");
+
+		} catch(NotFoundException | CannotCompileException e){
+			LOGGER.error("Error patching FacesServlet",e);
+		}
 	}
 
 	@Init
-	public void initializeInstance(PluginConfiguration pluginConfiguration){
-		LOGGER.error("FacesServletPlugin 2.2 plugin Initialized INSTANCE at classLoader {}", appClassLoader);
-
-//		for(Map.Entry<URL,Properties> e: pluginConfiguration.getConfigurations().entrySet()) {
-//			LOGGER.error(" Base path:{}", e.getKey());
-//			LOGGER.error("      Type:{}", e.getValue().getProperty("packaging"));
-//			LOGGER.error("Class Path:{}", e.getValue().getProperty("extraClasspath"));
-//		}
+	public void initializeInstance(PluginConfiguration pluginConfiguration) {
+		LOGGER.info("FacesServletPlugin 2.2 plugin Initialized INSTANCE at classLoader {}, pluginConfiguration: {}", appClassLoader, pluginConfiguration);
 	}
-	
+
 	public void setRealPath(String realPath) {
 		this.realPath = realPath;
-		LOGGER.error("FacesServletPlugin REALPATH: {}, {}, {}", this.realPath, appClassLoader, pluginConfiguration);
+		LOGGER.info("FacesServletPlugin web-app path: {} using classloader {}", this.realPath, appClassLoader);
 	}
 
-	
-	private final MergeableCommand command = new MergeableCommand(){
+	private final MergeableCommand command = new MergeableCommand() {
 
 		@Override
 		public void executeCommand() {
-			LOGGER.error("RUNCOMMAND");
+			LOGGER.trace("RUNCOMMAND");
 			List<String> files = new ArrayList<>();
-			synchronized(pending){
-				LOGGER.error("MODIFIED FILE:{}", pending.toString());
+			synchronized (pending) {
+				LOGGER.trace("Modifief Files:{}", pending);
 				files.addAll(pending);
 				pending.clear();
 			}
-			for(String p: files) {
-				LOGGER.error("Copying file {}, {}, {} ",p, Arrays.toString(pluginConfiguration.getWatchResources()),  Arrays.toString(pluginConfiguration.getExtraClasspath()));
+			for (String p : files) {
+				if(LOGGER.isLevelEnabled(Level.TRACE)) {
+					LOGGER.trace("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
+				}
+				
 				File f = new File(p);
-				for(URL u : pluginConfiguration.getWatchResources()) {
-					LOGGER.error("Trying path: {}", u);
-					try{
+				for (URL u : pluginConfiguration.getWatchResources()) {
+					LOGGER.trace("Trying path: {}", u);
+					try {
 						File d = new File(u.getFile());
-						if(f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
+						if (f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
 							String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "/");
-							if(x.endsWith("//")) {
-								x = x.replace("//","/");
+							if (x.endsWith("//") || x.endsWith("\\/")) {
+								x = x.replace("//", "/").replace("\\/", "/");
 							}
-							LOGGER.error("Copying file {} to {} ",p,  new File(realPath,x).getAbsolutePath());
+							LOGGER.trace("Copying file {} to {} ", p, new File(realPath, x).getAbsolutePath());
 							try {
-								Files.copy(f.toPath(), new File(realPath,x).toPath(), StandardCopyOption.REPLACE_EXISTING);
+								Files.copy(f.toPath(), new File(realPath, x).toPath(), StandardCopyOption.REPLACE_EXISTING);
 							} catch (IOException e) {
-								LOGGER.error("Error copying file {} to {} ",p,  d +x);
-								e.printStackTrace();
+								LOGGER.error("Error copying file {} to {} ",e, p, d + x);
 							}
 						} else {
-							LOGGER.error("Not a match for  copying file {} to {} ",p,  d);
+							LOGGER.trace("Not a match for  copying file {} to {} ", p, d);
 						}
 					} catch (Exception e) {
-						LOGGER.error("Error copying file {} to {} ",p, u);
-						e.printStackTrace();
+						LOGGER.error("Error copying file {} to {} ",e, p, u);
 					}
 				}
 			}
 		}
 	};
-	
-    @OnResourceFileEvent(path = "/", filter = ".*")
-    public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
-    	//LOGGER.error("XX File updated: {}, {}, {}", fileUrl, evt, appClassLoader);
-    	if(FileEvent.DELETE.equals(evt) || fileUrl.getFile().endsWith(".class")){
-    		return;
-    	}
-    	synchronized(pending){
-    		pending.add(fileUrl.getFile());
-    	}
-        scheduler.scheduleCommand(command, 500);
-    }
+
+	@OnResourceFileEvent(path = "/", filter = ".*")
+	public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
+		if (FileEvent.DELETE.equals(evt) || fileUrl.getFile().endsWith(".class")) {
+			return;
+		}
+		synchronized (pending) {
+			pending.add(fileUrl.getFile());
+		}
+		scheduler.scheduleCommand(command, 250, DuplicateSheduleBehaviour.SKIP);
+	}
 }
