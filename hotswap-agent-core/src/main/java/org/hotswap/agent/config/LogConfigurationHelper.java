@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.Properties;
 
 import org.hotswap.agent.logging.AgentLogger;
 
@@ -27,11 +26,11 @@ public class LogConfigurationHelper {
 	 * @param properties
 	 *            properties
 	 */
-	public static void configureLog(Properties properties) {
+	public static void configureLog(MergedProperties properties) {
 		for (String property : properties.stringPropertyNames()) {
 			if (property.startsWith(LOGGER_PREFIX)) {
 				String classPrefix = getClassPrefix(property);
-				AgentLogger.Level level = getLevel(property, properties.getProperty(property));
+				AgentLogger.Level level = getLevel(property, properties.getPropertyRecursive(property));
 
 				if (level != null) {
 					if (classPrefix == null) {
@@ -41,14 +40,13 @@ public class LogConfigurationHelper {
 					}
 				}
 			} else if (property.equals(LOGFILE)) {
-				String logfile = properties.getProperty(LOGFILE);
-				boolean append = parseBoolean(properties.getProperty(LOGFILE_APPEND, "false"));
+				String logfile = properties.getPropertyRecursive(LOGFILE);
+				boolean append = parseBoolean(properties.getPropertyRecursive(LOGFILE_APPEND, "false"));
 				try {
 					PrintStream ps = new PrintStream(new FileOutputStream(new File(logfile), append));
 					AgentLogger.getHandler().setPrintStream(ps);
 				} catch (FileNotFoundException e) {
-					LOGGER.error("Invalid configuration property {} value '{}'. Unable to create/open the file.", e,
-							LOGFILE, logfile);
+					LOGGER.error("Invalid configuration property {} value '{}'. Unable to create/open the file.", e, LOGFILE, logfile);
 				}
 			}
 		}
@@ -59,8 +57,7 @@ public class LogConfigurationHelper {
 		try {
 			return AgentLogger.Level.valueOf(levelName.toUpperCase());
 		} catch (IllegalArgumentException e) {
-			LOGGER.warning("Invalid configuration value for property '{}'. Unknown LOG level '{}'.", property,
-					levelName);
+			LOGGER.warning("Invalid configuration value for property '{}'. Unknown LOG level '{}'.", property, levelName);
 			return null;
 		}
 	}

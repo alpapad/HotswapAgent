@@ -1,17 +1,13 @@
 package org.hotswap.agent.config;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hotswap.agent.HotswapAgent;
@@ -33,152 +29,105 @@ public class PluginConfiguration {
 
 	private static final String PLUGIN_CONFIGURATION = "hotswap-agent.properties";
 
-	private List<Properties> properties = new ArrayList<>();
-
-	Properties base = new Properties();
-
 	// if the property is not defined in this classloader, look for parent
 	// classloader and it's configuration
-	PluginConfiguration parent;
 
 	// this configuration adheres to this classloader
-	ClassLoader classLoader;
+	private final ClassLoader classLoader;
 
-	// the hotswap-agent.properties file (or null if not defined for this
-	// classloader)
-	URL configurationURL;
+	private final MergedProperties merged;
 
-	LinkedHashSet<URL> knownUrls = new LinkedHashSet<>();
-
-	//Map<URL, Properties> configurations = new TreeMap<>();
-
-	// is property file defined directly in this classloader?
-	boolean containsPropertyFileDirectly = false;
+	private final int me;
 
 	public PluginConfiguration(ClassLoader classLoader) {
-		this.classLoader = classLoader;
-		configurationURL = classLoader == null ? ClassLoader.getSystemResource(PLUGIN_CONFIGURATION) : classLoader.getResource(PLUGIN_CONFIGURATION);
+		this.me = cnt.incrementAndGet();
 
-		try {
-			if (configurationURL != null) {
-				containsPropertyFileDirectly = true;
-				bootStrap(classLoader, configurationURL);
-				init();
-				LOGGER.debug("Configuration URL" + configurationURL.getPath());
-			}
-		} catch (Exception e) {
-			LOGGER.error("Error while loading 'hotswap-agent.properties' from base URL " + configurationURL, e);
+		this.classLoader = classLoader;
+
+		URL configurationURL = findResource(classLoader, PLUGIN_CONFIGURATION);
+
+		merged = new MergedProperties(configurationURL);
+		bootStrap(classLoader);
+		init();
+
+		if (merged.isContainsPropertyFileDirectly()) {
+			LOGGER.debug("Configuration URL" + configurationURL.getPath());
 		}
 	}
 
 	private static final AtomicInteger cnt = new AtomicInteger();
 
-	int me = 0;
-
 	public PluginConfiguration(PluginConfiguration parent, ClassLoader classLoader) {
-		me = cnt.incrementAndGet();
-		this.parent = parent;
+		this.me = cnt.incrementAndGet();
 		this.classLoader = classLoader;
 
+		URL configurationURL = null;
+
 		LOGGER.debug("Initializing configuration for classloader:{}", classLoader);
-		// search for resources not known by parent classloader (defined in THIS classloader exclusively)
+		// search for resources not known by parent classloader (defined in THIS
+		// classloader exclusively)
 		// this is necessary in case of parent classloader precedence
-		try {
-			Enumeration<URL> urls = classLoader == null ? ClassLoader.getSystemResources(PLUGIN_CONFIGURATION) : classLoader.getResources(PLUGIN_CONFIGURATION);
-			while (urls.hasMoreElements()) {
-				URL url = urls.nextElement();
+		Enumeration<URL> urls = findResources(classLoader, PLUGIN_CONFIGURATION);
 
-				boolean found = false;
+		while (urls.hasMoreElements()) {
+			URL url = urls.nextElement();
 
-				if (parent != null) {
-					ClassLoader parentClassLoader = parent.getClassLoader();
-					Enumeration<URL> parentUrls = parentClassLoader == null
-							? ClassLoader.getSystemResources(PLUGIN_CONFIGURATION)
-							: parentClassLoader.getResources(PLUGIN_CONFIGURATION);
-					while (parentUrls.hasMoreElements()) {
-						if (url.equals(parentUrls.nextElement())) {
-							found = true;
-						}
+			boolean found = false;
+
+			if (parent != null) {
+				ClassLoader parentClassLoader = parent.getClassLoader();
+
+				Enumeration<URL> parentUrls = findResources(parentClassLoader, PLUGIN_CONFIGURATION);
+
+				while (parentUrls.hasMoreElements()) {
+					if (url.equals(parentUrls.nextElement())) {
+						found = true;
 					}
 				}
-				if (!found) {
-					configurationURL = url;
-					break;
-				}
 			}
-		} catch (IOException e) {
-			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
-		}
-
-		if (configurationURL == null && parent != null) {
-			configurationURL = parent.configurationURL;
-			LOGGER.debug("Classloader does not contain 'hotswap-agent.properties', using parent file '{}'", parent.configurationURL);
-		} else {
-			LOGGER.debug("Classloader contains 'hotswap-agent.properties' at location '{}'", configurationURL);
-			containsPropertyFileDirectly = true;
-		}
-
-		if (configurationURL != null) {
-			knownUrls.add(configurationURL);
-		}
-
-		try {
-			if (configurationURL != null) {
-				bootStrap(classLoader, configurationURL);
+			if (!found) {
+				configurationURL = url;
+				break;
 			}
-			init();
-		} catch (Exception e) {
-			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
+		}
+
+		merged = new MergedProperties(parent.merged, configurationURL);
+		bootStrap(classLoader);
+		init();
+	}
+
+	private void bootStrap(ClassLoader classLoader) {
+
+		Enumeration<URL> turls = findResources(classLoader, PLUGIN_CONFIGURATION);
+		if (!turls.hasMoreElements()) {
+			LOGGER.trace("No Nested Configurations found");
+		}
+
+		while (turls.hasMoreElements()) {
+			URL url = turls.nextElement();
+			LOGGER.info("Nested Configuration (" + me + ") URL:" + url.getPath());
+			merged.put(url);
 		}
 	}
 
-	private void bootStrap(ClassLoader classLoader, URL configurationURL) throws IOException {
-
-		if (configurationURL != null) {
-			base.load(configurationURL.openStream());
-		}
-
-		Enumeration<URL> turls;
+	private static Enumeration<URL> findResources(ClassLoader classLoader, String name) {
 		try {
-			turls = classLoader == null ? ClassLoader.getSystemResources(PLUGIN_CONFIGURATION)
-					: classLoader.getResources(PLUGIN_CONFIGURATION);
-			if(!turls.hasMoreElements()) {
-				LOGGER.trace("No Nested Configurations found");
-			}
-			
-			while (turls.hasMoreElements()) {
-				URL url = turls.nextElement();
-				LOGGER.info("Nested Configuration (" + me + ") URL:" + url.getPath());
-				Properties p = load(url);
-				if(p!= null) {
-					properties.add(p);
-				}
-			}
+			return classLoader == null ? ClassLoader.getSystemResources(name) : classLoader.getResources(name);
 		} catch (IOException e) {
-			LOGGER.error("Error while loading 'hotswap-agent.properties' from classloader " + classLoader, e);
-			e.printStackTrace();
+			LOGGER.error("Error while loading '{}' from classloader {}", e, name, classLoader);
 		}
-
+		return Collections.emptyEnumeration();
 	}
 
-	private Properties load(URL u) {
-		LOGGER.debug("LoadedProperties Loading: {}", u);
-		Properties p = new Properties();
-		try {
-			p.load(u.openStream());
-			LOGGER.debug("LoadedProperties {} {}", u, p.toString());
-			return p;
-		} catch (IOException e) {
-			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
-		}
-		return null;
+	private static URL findResource(ClassLoader classLoader, String name) {
+		return classLoader == null ? ClassLoader.getSystemResource(name) : classLoader.getResource(name);
 	}
 
 	/**
 	 * Initialize the configuration.
 	 */
 	protected void init() {
-		LogConfigurationHelper.configureLog(base);
+		LogConfigurationHelper.configureLog(merged);
 
 		initPluginPackage();
 
@@ -187,8 +136,8 @@ public class PluginConfiguration {
 
 	private void initPluginPackage() {
 		// only for self property (not parent)
-		if (base.containsKey("pluginPackages")) {
-			String pluginPackages = base.getProperty("pluginPackages");
+		if (merged.containsKey("pluginPackages")) {
+			String pluginPackages = merged.getProperty("pluginPackages");
 			for (String pluginPackage : pluginPackages.split(",")) {
 				PluginManager.getInstance().getPluginRegistry().scanPlugins(getClassLoader(), pluginPackage);
 			}
@@ -198,7 +147,7 @@ public class PluginConfiguration {
 
 	private void initExtraClassPath() {
 		URL[] extraClassPath = getExtraClasspath();
-		
+
 		LOGGER.debug("Setting extraClasspath to {} on classLoader {}. ", Arrays.toString(extraClassPath), classLoader);
 		if (extraClassPath.length > 0) {
 			if (classLoader instanceof URLClassLoader) {
@@ -222,13 +171,7 @@ public class PluginConfiguration {
 	 * @return the property value or null if not defined
 	 */
 	public String getProperty(String property) {
-		if (base.containsKey(property)) {
-			return base.getProperty(property);
-		} else if (parent != null) {
-			return parent.getProperty(property);
-		} else {
-			return null;
-		}
+		return merged.getProperty(property);
 	}
 
 	/**
@@ -241,8 +184,7 @@ public class PluginConfiguration {
 	 * @return the property value or null if not defined
 	 */
 	public String getProperty(String property, String defaultValue) {
-		String value = getProperty(property);
-		return value != null ? value : defaultValue;
+		return merged.getProperty(property, defaultValue);
 	}
 
 	/**
@@ -254,13 +196,7 @@ public class PluginConfiguration {
 	 * @return the property value or null if not defined
 	 */
 	public boolean getPropertyBoolean(String property) {
-		if (base.containsKey(property)) {
-			return Boolean.valueOf(base.getProperty(property));
-		} else if (parent != null) {
-			return parent.getPropertyBoolean(property);
-		} else {
-			return false;
-		}
+		return merged.getPropertyBoolean(property);
 	}
 
 	/**
@@ -271,28 +207,7 @@ public class PluginConfiguration {
 	 * @return the property value or null if not defined
 	 */
 	public String getAllProperty(String property) {
-		String v = null;
-		if (base.containsKey(property)) {
-			v = base.getProperty(property);
-		}
-		for (Properties p : properties) {
-			if (p.containsKey(property)) {
-				String pv = p.getProperty(property);
-				if (pv == null || pv.trim().length() == 0) {
-					continue;
-				}
-				if (v == null) {
-					v = pv.trim();
-				} else {
-					v = v.trim() + "," + pv.trim();
-				}
-			}
-		}
-		if (v == null && parent != null) {
-			return parent.getProperty(property);
-		} else {
-			return v;
-		}
+		return merged.getAllProperties(property);
 	}
 
 	/**
@@ -301,8 +216,8 @@ public class PluginConfiguration {
 	 * @return extraClasspath or empty array (never null)
 	 */
 	public URL[] getExtraClasspath() {
-		URL[] extraClassPath = convertToURL(getAllProperty("extraClasspath"));
-		if(LOGGER.isLevelEnabled(Level.DEBUG)) {
+		URL[] extraClassPath = merged.getUrls("extraClasspath");
+		if (LOGGER.isLevelEnabled(Level.DEBUG)) {
 			LOGGER.debug("Getting extraClasspath {}. ", Arrays.toString(extraClassPath));
 		}
 		return extraClassPath;
@@ -313,8 +228,8 @@ public class PluginConfiguration {
 	 * skipped and logged as error.
 	 */
 	public URL[] getWatchResources() {
-		URL[] watchResources = convertToURL(getAllProperty("watchResources"));
-		if(LOGGER.isLevelEnabled(Level.DEBUG)) {
+		URL[] watchResources = merged.getUrls("watchResources");
+		if (LOGGER.isLevelEnabled(Level.DEBUG)) {
 			LOGGER.debug("Getting watchResources {}. ", Arrays.toString(watchResources));
 		}
 		return watchResources;
@@ -324,19 +239,14 @@ public class PluginConfiguration {
 	 * Return configuration property webappDir as URL.
 	 */
 	public URL getWebappDir() {
-		try {
-			String webappDir = getProperty("webappDir");
-			if (webappDir != null && webappDir.length() > 0) {
-				return resourceNameToURL(webappDir);
-			} else {
-				return null;
-			}
-		} catch (Exception e) {
+		URL u = merged.getUrl("webappDir");
+		if (u == null) {
 			LOGGER.error(
 					"Invalid configuration value for webappDir: '{}' is not a valid URL or path and will be skipped.",
-					getProperty("webappDir"), e);
+					getProperty("webappDir"));
 			return null;
 		}
+		return u;
 	}
 
 	/**
@@ -365,42 +275,6 @@ public class PluginConfiguration {
 		return isDisabledPlugin(pluginAnnotation.name());
 	}
 
-	private URL[] convertToURL(String resources) {
-		LinkedHashSet<URL> ret = new LinkedHashSet<>();
-
-		if (resources != null) {
-			StringTokenizer tokenizer = new StringTokenizer(resources, ",;");
-			while (tokenizer.hasMoreTokens()) {
-				String name = tokenizer.nextToken().trim();
-				try {
-					if (name != null && name.trim().length() > 0) {
-						ret.add(resourceNameToURL(name));
-					}
-				} catch (Exception e) {
-					LOGGER.error("Invalid configuration value: '{}' is not a valid URL or path and will be skipped.",
-							name, e);
-				}
-			}
-		}
-
-		return ret.toArray(new URL[ret.size()]);
-	}
-
-	private static URL resourceNameToURL(String resource) throws Exception {
-		try {
-			// Try to format as a URL?
-			return new URL(resource);
-		} catch (MalformedURLException e) {
-			// try to locate a file
-			if (resource.startsWith("./")) {
-				resource = resource.substring(2);
-			}
-
-			File file = new File(resource).getCanonicalFile();
-			return file.toURI().toURL();
-		}
-	}
-
 	/**
 	 * Returns classloader associated with this configuration (i.e. it was
 	 * initiated from).
@@ -418,24 +292,18 @@ public class PluginConfiguration {
 	 * @return if this contains directly the property file
 	 */
 	public boolean containsPropertyFile() {
-		return containsPropertyFileDirectly;
+		return merged.isContainsPropertyFileDirectly();
 	}
 
-	public URL getConfigurationURL() {
-		return configurationURL;
-	}
-
-	public LinkedHashSet<URL> getKnownUrls() {
-		return knownUrls;
-	}
+	// public URL getConfigurationURL() {
+	// return configurationURL;
+	// }
 
 	@Override
 	public String toString() {
 		return "PluginConfiguration [me=" + me + ", getExtraClasspath()=" + Arrays.toString(getExtraClasspath())
-				+ ", getWatchResources()=" + Arrays.toString(getWatchResources()) + ", getWebappDir()=" + getWebappDir()
-				+ ", getDisabledPlugins()=" + getDisabledPlugins() + ", containsPropertyFile()="
-				+ containsPropertyFile() + ", getConfigurationURL()=" + getConfigurationURL() + ", getKnownUrls()="
-				+ getKnownUrls() + "]";
+				+ ", getWatchResources()=" + Arrays.toString(getWatchResources()) + ", getDisabledPlugins()="
+				+ getDisabledPlugins() + ", containsPropertyFile()=" + containsPropertyFile() + "]";
 	}
 
 }
