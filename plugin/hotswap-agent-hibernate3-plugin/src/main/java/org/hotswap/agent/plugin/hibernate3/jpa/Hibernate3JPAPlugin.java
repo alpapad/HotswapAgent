@@ -10,7 +10,7 @@ import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.LoadEvent;
 import org.hotswap.agent.annotation.OnClassFileEvent;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
-import org.hotswap.agent.annotation.Plugin;
+//import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.ReflectionCommand;
 import org.hotswap.agent.command.Scheduler;
@@ -24,11 +24,13 @@ import org.hotswap.agent.util.AnnotationHelper;
  *
  * @author Jiri Bubnik
  */
+/*
 @Plugin(name = "Hibernate3JPA", //
 		description = "Reload Hibernate configuration after entity create/change.", //
 		testedVersions = { "3.6" }, //
 		expectedVersions = { "3.6" }, //
 		supportClass = { HibernateJPATransformers.class })
+*/
 public class Hibernate3JPAPlugin {
 	private static final String ENTITY_ANNOTATION = "javax.persistence.Entity";
 	private static AgentLogger LOGGER = AgentLogger.getLogger(Hibernate3JPAPlugin.class);
