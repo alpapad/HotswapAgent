@@ -10,8 +10,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.impl.SessionFactoryImpl;
-//import org.hibernate.internal.SessionFactoryImpl;
-//import org.hibernate.service.ServiceRegistry;
 import org.hotswap.agent.javassist.util.proxy.MethodHandler;
 import org.hotswap.agent.javassist.util.proxy.Proxy;
 import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
