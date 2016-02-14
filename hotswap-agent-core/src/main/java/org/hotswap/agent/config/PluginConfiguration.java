@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.hotswap.agent.HotswapAgent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.util.classloader.HotswapAgentClassLoaderExt;
 import org.hotswap.agent.util.classloader.URLClassLoaderHelper;
 
@@ -131,68 +132,10 @@ public class PluginConfiguration {
 		}
 	}
 
-	public void reload(){
-//		knownUrls.clear();
-//		properties.clear();
-//		//configurations.clear();
-//		
-//		LOGGER.info("Re-Initializing configuration for classloader:{}", classLoader);
-//		// search for resources not known by parent classloader (defined in THIS classloader exclusively)
-//		// this is necessary in case of parent classloader precedence
-//		try {
-//			Enumeration<URL> urls = classLoader == null ? ClassLoader.getSystemResources(PLUGIN_CONFIGURATION) : classLoader.getResources(PLUGIN_CONFIGURATION);
-//			while (urls.hasMoreElements()) {
-//				URL url = urls.nextElement();
-//
-//				boolean found = false;
-//
-//				if (parent != null) {
-//					ClassLoader parentClassLoader = parent.getClassLoader();
-//					Enumeration<URL> parentUrls = parentClassLoader == null
-//							? ClassLoader.getSystemResources(PLUGIN_CONFIGURATION)
-//							: parentClassLoader.getResources(PLUGIN_CONFIGURATION);
-//					while (parentUrls.hasMoreElements()) {
-//						if (url.equals(parentUrls.nextElement())) {
-//							found = true;
-//						}
-//					}
-//				}
-//				if (!found) {
-//					configurationURL = url;
-//					break;
-//				}
-//			}
-//		} catch (IOException e) {
-//			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
-//		}
-//
-//		if (configurationURL == null && parent != null) {
-//			configurationURL = parent.configurationURL;
-//			LOGGER.debug("Classloader does not contain 'hotswap-agent.properties', using parent file '{}'", parent.configurationURL);
-//		} else {
-//			LOGGER.debug("Classloader contains 'hotswap-agent.properties' at location '{}'", configurationURL);
-//			containsPropertyFileDirectly = true;
-//		}
-//
-//		if (configurationURL != null) {
-//			knownUrls.add(configurationURL);
-//		}
-//
-//		try {
-//			if (configurationURL != null) {
-//				bootStrap(classLoader, configurationURL);
-//			}
-//			
-//		} catch (Exception e) {
-//			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
-//		}
-//		init();
-	}
 	private void bootStrap(ClassLoader classLoader, URL configurationURL) throws IOException {
 
 		if (configurationURL != null) {
 			base.load(configurationURL.openStream());
-			//knownUrls.add(configurationURL);
 		}
 
 		Enumeration<URL> turls;
@@ -205,15 +148,7 @@ public class PluginConfiguration {
 			
 			while (turls.hasMoreElements()) {
 				URL url = turls.nextElement();
-
 				LOGGER.info("Nested Configuration (" + me + ") URL:" + url.getPath());
-				//if (!knownUrls.contains(url)) {
-				//	knownUrls.add(url);
-				//} 
-				//else {
-				//	LOGGER.info("Nested Configuration (" + me + ") URL, seen again:" + url.getPath());
-				//	return;
-				//}
 				Properties p = load(url);
 				if(p!= null) {
 					properties.add(p);
@@ -227,16 +162,14 @@ public class PluginConfiguration {
 	}
 
 	private Properties load(URL u) {
-		LOGGER.error("LoadedProperties Loading: {}", u);
+		LOGGER.debug("LoadedProperties Loading: {}", u);
 		Properties p = new Properties();
 		try {
 			p.load(u.openStream());
-			//configurations.put(u, p);
-			LOGGER.error("LoadedProperties {} {}", u, p.toString());
+			LOGGER.debug("LoadedProperties {} {}", u, p.toString());
 			return p;
 		} catch (IOException e) {
 			LOGGER.error("Error while loading 'hotswap-agent.properties' from URL " + configurationURL, e);
-			e.printStackTrace();
 		}
 		return null;
 	}
@@ -265,9 +198,7 @@ public class PluginConfiguration {
 
 	private void initExtraClassPath() {
 		URL[] extraClassPath = getExtraClasspath();
-		// ClassLoader loader = classLoader==
-		// null?ClassLoader.getSystemClassLoader():classLoader;
-
+		
 		LOGGER.debug("Setting extraClasspath to {} on classLoader {}. ", Arrays.toString(extraClassPath), classLoader);
 		if (extraClassPath.length > 0) {
 			if (classLoader instanceof URLClassLoader) {
@@ -371,7 +302,9 @@ public class PluginConfiguration {
 	 */
 	public URL[] getExtraClasspath() {
 		URL[] extraClassPath = convertToURL(getAllProperty("extraClasspath"));
-		LOGGER.debug("Getting extraClasspath {}. ", Arrays.toString(extraClassPath));
+		if(LOGGER.isLevelEnabled(Level.DEBUG)) {
+			LOGGER.debug("Getting extraClasspath {}. ", Arrays.toString(extraClassPath));
+		}
 		return extraClassPath;
 	}
 
@@ -381,7 +314,9 @@ public class PluginConfiguration {
 	 */
 	public URL[] getWatchResources() {
 		URL[] watchResources = convertToURL(getAllProperty("watchResources"));
-		LOGGER.debug("Getting watchResources {}. ", Arrays.toString(watchResources));
+		if(LOGGER.isLevelEnabled(Level.DEBUG)) {
+			LOGGER.debug("Getting watchResources {}. ", Arrays.toString(watchResources));
+		}
 		return watchResources;
 	}
 
@@ -493,17 +428,6 @@ public class PluginConfiguration {
 	public LinkedHashSet<URL> getKnownUrls() {
 		return knownUrls;
 	}
-
-//	public Map<URL, Properties> getConfigurations() {
-//		return configurations;
-//	}
-//
-//	@Override
-//	public String toString() {
-//		return "PluginConfiguration [properties=" + properties + ", base=" + base + ", parent=" + parent
-//				+ ", classLoader=" + classLoader + ", configurationURL=" + configurationURL + ", knownUrls=" + knownUrls
-//				+ ", containsPropertyFileDirectly=" + containsPropertyFileDirectly + ", me=" + me + "]";
-//	}
 
 	@Override
 	public String toString() {

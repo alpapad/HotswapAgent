@@ -58,7 +58,7 @@ public class AnnotationProcessor {
 	 * @return true if success
 	 */
 	public boolean processStaticAnnotations(Class<?> processClass, Class<?> pluginClass) {
-		LOGGER.error("Processing annotations on static methods and fields for plugin: '" + pluginClass );
+		LOGGER.debug("Processing annotations on static methods and fields for plugin: '" + pluginClass );
 		try {
 			for (Field field : processClass.getDeclaredFields()) {
 				if (Modifier.isStatic(field.getModifiers())) {
@@ -104,10 +104,8 @@ public class AnnotationProcessor {
 	public boolean processPluginInstanceAnnotations(Object plugin, ClassLoader classLoader, PluginConfiguration cfg) {
 		LOGGER.debug("Processing annotations on plugin '" + plugin + "'.");
 
-		LOGGER.error("Initializing plugin {},\n{}\n{}", plugin, cfg, classLoader);
-		
-		cfg.reload();
-		
+		LOGGER.debug("Initializing plugin {},\n{}\n{}", plugin, cfg, classLoader);
+				
 		Class<?> pluginClass = plugin.getClass();
 
 		for (Field field : pluginClass.getDeclaredFields()) {
@@ -137,14 +135,14 @@ public class AnnotationProcessor {
 			for (Class<? extends Annotation> handlerAnnotation : handlers.keySet()) {
 				if (annotation.annotationType().equals(handlerAnnotation)) {
 					// initialize
-					LOGGER.debug("Initializing field for plugin '" + plugin + "'." + field.getName() + " --> " + annotation);
+					LOGGER.debug("Initializing field for plugin '{}'.{}", plugin, field.getName());
 
 					PluginAnnotation<?> pluginAnnotation = new PluginAnnotation<>(pluginClass, plugin, annotation, field);
 					if (!handlers.get(handlerAnnotation).initField(pluginAnnotation)) {
-						LOGGER.error("Could not process field annotations for plugin '" + plugin + "'." + field.getName());
+						LOGGER.error("Could not process field annotations for plugin '{}'.{}", plugin, field.getName());
 						return false;
 					}else {
-						LOGGER.debug("Initialized field for plugin '" + plugin + "'." + field.getName() + " --> " + annotation);
+						LOGGER.debug("Initialized field for plugin '{}'.{}", plugin, field.getName());
 					}
 				} 
 			}
@@ -159,13 +157,13 @@ public class AnnotationProcessor {
 			for (Class<? extends Annotation> handlerAnnotation : handlers.keySet()) {
 				if (annotation.annotationType().equals(handlerAnnotation)) {
 					// initialize
-					LOGGER.debug("Initializing method for plugin '" + plugin + "'." + method.getName() + " --> " + annotation);
+					LOGGER.debug("Initializing method for plugin '{}'.{}", plugin, method.getName());
 					PluginAnnotation<?> pluginAnnotation = new PluginAnnotation<>(pluginClass, plugin, annotation, method);
 					if (!handlers.get(handlerAnnotation).initMethod(pluginAnnotation)) {
-						LOGGER.error("Could not process method annotations for plugin '" + plugin + "'." + method.getName());
+						LOGGER.error("Could not process method annotations for plugin '{}'.{}", plugin, method.getName());
 						return false;
 					}else {
-						LOGGER.debug("Initialized method for plugin '" + plugin + "'." + method.getName() + " --> " + annotation);
+						LOGGER.debug("Initialized method for plugin '{}'.{}", plugin, method.getName());
 					}
 				}
 			}

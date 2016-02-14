@@ -42,7 +42,7 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
 		
 		ClassLoader classLoader = pluginManager.getPluginRegistry().getAppClassLoader(pluginAnnotation.getPlugin());
 		PluginConfiguration cfg = pluginManager.getPluginConfiguration(classLoader);
-		LOGGER.error("Initializing plugin {},\n{}\n{}", pluginAnnotation.getPlugin(), cfg, classLoader);
+		LOGGER.debug("Initializing plugin {},\n{}\n{}", pluginAnnotation.getPlugin(), cfg, classLoader);
 		try {
 			registerResources(pluginAnnotation, classLoader);
 		} catch (IOException e) {

@@ -8,7 +8,7 @@ import java.util.Map;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.impl.SessionFactoryImpl;
+import org.hibernate.internal.SessionFactoryImpl;
 //import org.hibernate.internal.SessionFactoryImpl;
 //import org.hibernate.service.ServiceRegistry;
 import org.hotswap.agent.javassist.util.proxy.MethodHandler;

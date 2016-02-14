@@ -10,10 +10,10 @@
         <relativePath>../../hotswap-agent-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>hotswap-agent-hibernate-plugin</artifactId>
+    <artifactId>hotswap-agent-hibernate3-plugin</artifactId>
 
     <properties>
-        <org.hibernateframework.version>4.3.5.Final</org.hibernateframework.version>
+        <org.hibernateframework.version>3.6.10.Final</org.hibernateframework.version>
     </properties>
 
 

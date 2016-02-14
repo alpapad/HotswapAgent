@@ -1,4 +1,4 @@
-package org.hotswap.agent.plugin.elresolver;
+package org.hotswap.agent.plugin.wildfly.el;
 
 import java.lang.reflect.Method;
 

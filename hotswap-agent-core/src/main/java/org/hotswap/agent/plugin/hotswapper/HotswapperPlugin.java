@@ -10,7 +10,6 @@ import org.hotswap.agent.HotswapAgent;
 import org.hotswap.agent.annotation.FileEvent;
 import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.OnClassFileEvent;
-import org.hotswap.agent.annotation.OnResourceFileEvent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.ReflectionCommand;
@@ -55,37 +54,6 @@ public class HotswapperPlugin {
 	// reload actions.
 	Command hotswapCommand;
 
-
-//    private static void dumpFile(ClassLoader appClassLoader, String resource){
-//		try {
-//			Enumeration<URL>  uu = appClassLoader.getResources(resource);
-//			if(uu != null) {
-//				while(uu.hasMoreElements()) {
-//					LOGGER.error("XXX + " + resource  +" URL:" + uu.nextElement());
-//				}
-//			}
-//
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//    }
-    
-	@OnResourceFileEvent(path = "/", filter=".*")
-	public void reloadResource(URL fileUrl, FileEvent evt, ClassLoader appClassLoader){
-		//LOGGER.error("File changed:" + evt + " --> "  + fileUrl);
-		//if(configuration != null) {
-		//	LOGGER.error("Config File:" + configuration.getConfigurationURL());
-		//}
-		
-        //dumpFile(appClassLoader, "WEB-INF/web.xml");
-        //dumpFile(appClassLoader, "/WEB-INF/web.xml");
-        //dumpFile(appClassLoader, "META-INF/web-fragment.xml");
-        //dumpFile(appClassLoader, "/META-INF/web-fragment.xml");
-        //dumpFile(appClassLoader, "hotswap-agent.properties");
-        //dumpFile(appClassLoader, "/hotswap-agent.properties");
-	}
-	
 	/**
 	 * For each changed class create a reload command.
 	 */
@@ -93,18 +61,9 @@ public class HotswapperPlugin {
 	public void watchReload(CtClass ctClass, ClassLoader appClassLoader, URL url)
 			throws IOException, CannotCompileException {
 		if (!ClassLoaderHelper.isClassLoaded(appClassLoader, ctClass.getName())) {
-			LOGGER.debug("XX Class {} not loaded yet, no need for autoHotswap, skipped URL {}", ctClass.getName(), url);
+			LOGGER.debug("Class {} not loaded yet, no need for autoHotswap, skipped URL {}", ctClass.getName(), url);
 			return;
 		}
-
-        //dumpFile(appClassLoader, "WEB-INF/web.xml");
-        //dumpFile(appClassLoader, "/WEB-INF/web.xml");
-        //dumpFile(appClassLoader, "META-INF/web-fragment.xml");
-        //dumpFile(appClassLoader, "/META-INF/web-fragment.xml");
-        //dumpFile(appClassLoader, "hotswap-agent.properties");
-        //dumpFile(appClassLoader, "/hotswap-agent.properties");
-        
-		//LOGGER.debug("XX Class {} will be reloaded from URL {}", ctClass.getName(), url);
 
 		// search for a class to reload
 		Class<?> clazz;
@@ -140,7 +99,7 @@ public class HotswapperPlugin {
 			hotswapCommand = new Command() {
 				@Override
 				public void executeCommand() {
-					LOGGER.debug("XXX swapping...");
+					LOGGER.debug("swapping... {}",reloadMap);
 					pluginManager.hotswap(reloadMap);
 				}
 
@@ -173,16 +132,11 @@ public class HotswapperPlugin {
 			return;
 		}
 
-		//scheduler.scheduleCommand( new Command() {
-		//	@Override
-		//	public void executeCommand() {
-				LOGGER.error("XXXXXXXX Init plugin at classLoader {}", appClassLoader);
-				String port = pluginConfiguration.getProperty("autoHotswap.port");
 
-				HotswapperPlugin plugin = PluginManagerInvoker.callInitializePlugin(HotswapperPlugin.class, appClassLoader);
-				plugin.initHotswapCommand(appClassLoader, port);
-		//	}
-		//}, 3000);
+		LOGGER.debug("Init plugin at classLoader {}", appClassLoader);
+		String port = pluginConfiguration.getProperty("autoHotswap.port");
 
+		HotswapperPlugin plugin = PluginManagerInvoker.callInitializePlugin(HotswapperPlugin.class, appClassLoader);
+		plugin.initHotswapCommand(appClassLoader, port);
 	}
 }

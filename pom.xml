@@ -15,20 +15,25 @@
 	<modules>
 		<module>hotswap-agent-parent</module>
 		<module>hotswap-agent-core</module>
-		<!-- module>plugin/hotswap-agent-hibernate-plugin</module -->
-		<!-- module>plugin/hotswap-agent-spring-plugin</module> <module>plugin/hotswap-agent-jersey2-plugin</module> 
-			<module>plugin/hotswap-agent-jetty-plugin</module> <module>plugin/hotswap-agent-tomcat-plugin</module> 
-			<module>plugin/hotswap-agent-zk-plugin</module> <module>plugin/hotswap-agent-logback-plugin</module -->
+		<module>plugin/hotswap-agent-spring-plugin</module>
+		<module>plugin/hotswap-agent-jersey2-plugin</module>
+		<module>plugin/hotswap-agent-jetty-plugin</module>
+		<module>plugin/hotswap-agent-tomcat-plugin</module>
+		<module>plugin/hotswap-agent-zk-plugin</module>
+		<module>plugin/hotswap-agent-logback-plugin</module>
 		<module>plugin/hotswap-agent-jsf-plugin</module>
-		<!-- module>plugin/hotswap-agent-seam-plugin</module -->
+		<module>plugin/hotswap-agent-seam-plugin</module>
 		<module>plugin/hotswap-agent-el-resolver-plugin</module>
-		<!-- module>plugin/hotswap-agent-osgiequinox-plugin</module -->
+		<module>plugin/hotswap-agent-osgiequinox-plugin</module>
 		<module>plugin/hotswap-agent-proxy-plugin</module>
-		<!-- module>plugin/hotswap-agent-webobjects-plugin</module -->
+		<module>plugin/hotswap-agent-webobjects-plugin</module>
 		<module>plugin/hotswap-agent-weld-plugin</module>
 		<module>plugin/hotswap-agent-jbossmodules-plugin</module>
 		<module>plugin/hotswap-agent-resteasy-plugin</module>
-		<!-- module>plugin/hotswap-agent-gae-plugin</module -->
+		<module>plugin/hotswap-agent-wildfly-el-plugin</module>
+		<module>plugin/hotswap-agent-gae-plugin</module>
+		<module>plugin/hotswap-agent-hibernate-plugin</module>
+		<module>plugin/hotswap-agent-hibernate3-plugin</module>
 		<module>hotswap-agent</module>
 	</modules>
 

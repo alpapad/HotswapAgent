@@ -1,4 +1,4 @@
-package org.hotswap.agent.plugin.elresolver;
+package org.hotswap.agent.plugin.wildfly.el;
 
 import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.LoadEvent;

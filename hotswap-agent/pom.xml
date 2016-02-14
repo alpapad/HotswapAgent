@@ -112,15 +112,21 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.hotswap.agent</groupId>
-	    <artifactId>hotswap-agent-resteasy-plugin</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>org.hotswap.agent</groupId>
+			<artifactId>hotswap-agent-resteasy-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
-        <!-- dependency>
+		<dependency>
+			<groupId>org.hotswap.agent</groupId>
+			<artifactId>hotswap-agent-wildfly-el-plugin</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	    
+	    <!-- dependency>
             <groupId>org.hotswap.agent</groupId>
-	    <artifactId>hotswap-agent-gae-plugin</artifactId>
+		    <artifactId>hotswap-agent-gae-plugin</artifactId>
             <version>${project.version}</version>
         </dependency -->
 

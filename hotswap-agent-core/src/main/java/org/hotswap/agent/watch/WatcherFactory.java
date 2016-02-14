@@ -27,12 +27,15 @@ public class WatcherFactory {
 		return Double.parseDouble(version.substring(0, pos - 1));
 	}
 
+	public static boolean IS_WINDOWS = isWindows();
+	
 	static boolean isWindows(){
-		return  System.getProperty("os.name").startsWith("Windows");
+		return System.getProperty("os.name").startsWith("Windows");
 	}
+	
 	public Watcher getWatcher() throws IOException {
 		if (JAVA_VERSION >= 1.7) {
-			if(isWindows()){
+			if(IS_WINDOWS){
 				return new TreeWatcherNIO();
 			} else {
 				return new WatcherNIO2();

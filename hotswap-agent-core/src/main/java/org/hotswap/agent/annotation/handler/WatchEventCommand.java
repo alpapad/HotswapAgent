@@ -46,7 +46,6 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 
 	@Override
 	public void executeCommand() {
-		//LOGGER.debug("Executing for pluginAnnotation={}, event={} at classloader {}", pluginAnnotation, event, classLoader);
 		onWatchEvent(pluginAnnotation, event, classLoader);
 	}
 

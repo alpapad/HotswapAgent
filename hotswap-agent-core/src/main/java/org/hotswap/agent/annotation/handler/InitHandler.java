@@ -64,7 +64,7 @@ public class InitHandler implements PluginHandler<Init> {
 	public boolean initMethod(PluginAnnotation<Init> pluginAnnotation) {
 		Object plugin = pluginAnnotation.getPlugin();
 
-		LOGGER.error("Calling init method on plugin: '" + plugin );
+		LOGGER.debug("Calling init method on plugin: '" + plugin );
 
 		
 		if (plugin == null) {
