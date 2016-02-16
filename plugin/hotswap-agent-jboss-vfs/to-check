@@ -1,0 +1,3 @@
+org.jboss.vfs.spi.RealFileSystem
+org.jboss.vfs.VFS
+	public static Closeable mountReal(File realRoot, VirtualFile mountPoint) throws IOException {

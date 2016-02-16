@@ -1,7 +1,6 @@
 package org.hotswap.agent.util.classloader;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -160,15 +159,15 @@ public class WatchResourcesClassLoader extends URLClassLoader {
 		}
 	}
 
-	@Override
-	public InputStream getResourceAsStream(String name) {
-		URL url = getResource(name);
-		try {
-			return url != null ? url.openStream() : null;
-		} catch (IOException e) {
-		}
-		return null;
-	}
+//	@Override
+//	public InputStream getResourceAsStream(String name) {
+//		URL url = getResource(name);
+//		try {
+//			return url != null ? url.openStream() : null;
+//		} catch (IOException e) {
+//		}
+//		return null;
+//	}
 
 	/**
 	 * Returns only a single instance of the changed resource. There are

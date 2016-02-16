@@ -1,6 +1,5 @@
 package org.hotswap.agent.plugin.hibernate3.session.proxy;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -8,13 +7,7 @@ import java.util.Map;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.impl.SessionFactoryImpl;
-import org.hotswap.agent.javassist.util.proxy.MethodHandler;
-import org.hotswap.agent.javassist.util.proxy.Proxy;
-import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
-
-import sun.reflect.ReflectionFactory;
 
 /**
  * For Hibernate without EJB (EntityManager).
@@ -23,7 +16,6 @@ import sun.reflect.ReflectionFactory;
  *
  * @author Jiri Bubnik
  */
-@SuppressWarnings("restriction")
 public class SessionFactoryProxy {
 	private static Map<Configuration, SessionFactoryProxy> proxiedFactories = new HashMap<Configuration, SessionFactoryProxy>();
 
@@ -56,39 +48,23 @@ public class SessionFactoryProxy {
 		ReInitializable.class.cast(configuration).hotSwap();
 		Method m = Configuration.class.getDeclaredMethod("_buildSessionFactory");
 		currentInstance = (SessionFactory) m.invoke(configuration);
+		proxy.setCurrentInstance(SessionFactoryImpl.class.cast(currentInstance));
 	}
 
 	private Configuration configuration;
 
 	private SessionFactory currentInstance;
-
+	
+	private Proxied  proxy;
+	
 	public SessionFactory proxy(SessionFactory sessionFactory) {
 		try {
 			this.currentInstance = sessionFactory;
-
-			ProxyFactory factory = new ProxyFactory();
-			factory.setSuperclass(SessionFactoryImpl.class);
-			factory.setInterfaces(new Class[] { SessionFactory.class, SessionFactoryImplementor.class });
-
-			MethodHandler handler = new MethodHandler() {
-				@Override
-				public Object invoke(Object self, Method overridden, Method forwarder, Object[] args) throws Throwable {
-					return overridden.invoke(currentInstance, args);
-				}
-			};
-
-			Object instance;
-			try {
-				Constructor<?> constructor = ReflectionFactory.getReflectionFactory().newConstructorForSerialization(
-						factory.createClass(), Object.class.getDeclaredConstructor(new Class[0]));
-				instance = constructor.newInstance();
-				((Proxy) instance).setHandler(handler);
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new Error("Unable instantiate SessionFactory proxy", e);
-			}
-
-			return (SessionFactory) instance;
+			Class<?> cc = this.getClass().getClassLoader().loadClass("org.hotswap.agent.plugin.hibernate3.session.proxy.ProxySessionFactoryImpl");
+			Object o = cc.newInstance();
+			proxy = Proxied.class.cast(o);
+			proxy.setCurrentInstance(SessionFactoryImpl.class.cast(currentInstance));
+			return SessionFactory.class.cast(proxy);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new Error("Unable instantiate SessionFactory proxy", e);

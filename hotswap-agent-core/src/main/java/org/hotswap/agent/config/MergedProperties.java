@@ -2,6 +2,7 @@ package org.hotswap.agent.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -154,7 +155,7 @@ public class MergedProperties {
 				if (pv == null || pv.trim().length() == 0) {
 					continue;
 				}
-				if (value == null) {
+				if (value == null || value.trim().length() == 0) {
 					value = pv.trim();
 				} else {
 					value = value.trim() + "," + pv.trim();
@@ -162,6 +163,28 @@ public class MergedProperties {
 			}
 		}
 		return value;
+	}
+	
+	/**
+	 * Get all properties as an array
+	 * 
+	 * @param property
+	 * @return
+	 */
+	public String[] getAllPropertiesAsArray(String property){
+		String resources = getAllProperties(property);
+		LinkedHashSet<String> ret = new LinkedHashSet<String>();
+
+		if (resources != null) {
+			StringTokenizer tokenizer = new StringTokenizer(resources, ",;");
+			while (tokenizer.hasMoreTokens()) {
+				String name = tokenizer.nextToken().trim();
+				if (name != null && name.trim().length() > 0) {
+					ret.add(name);
+				}
+			}
+		}
+		return ret.toArray(new String[ret.size()]);
 	}
 	
 	public URL[] getUrls(String property) {
@@ -206,8 +229,8 @@ public class MergedProperties {
 	private Properties load(URL url) {
 		LOGGER.debug("LoadedProperties Loading: {}", url);
 		Properties p = new Properties();
-		try {
-			p.load(url.openStream());
+		try(InputStream is = url.openStream()) {
+			p.load(is);
 			LOGGER.debug("LoadedProperties {} {}", url, p.toString());
 			return p;
 		} catch (IOException e) {

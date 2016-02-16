@@ -108,6 +108,19 @@ public class PluginConfiguration {
 			LOGGER.info("Nested Configuration (" + me + ") URL:" + url.getPath());
 			merged.put(url);
 		}
+		String[] overlays = merged.getAllPropertiesAsArray("overlays");
+		if(overlays != null ) {
+			for(String overlay: overlays){
+				if(overlay.trim().length() >0){
+					Enumeration<URL> ohs = findResources(classLoader, overlay.trim());
+					while (ohs.hasMoreElements()) {
+						URL url = ohs.nextElement();
+						LOGGER.info("Overlay Configuration (" + me + ") URL:" + url.getPath());
+						merged.put(url);
+					}
+				}
+			}
+		}
 	}
 
 	private static Enumeration<URL> findResources(ClassLoader classLoader, String name) {

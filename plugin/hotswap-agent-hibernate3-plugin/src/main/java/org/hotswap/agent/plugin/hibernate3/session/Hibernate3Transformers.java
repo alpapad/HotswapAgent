@@ -7,10 +7,11 @@ import org.hotswap.agent.javassist.CtConstructor;
 import org.hotswap.agent.javassist.CtField;
 import org.hotswap.agent.javassist.CtMethod;
 import org.hotswap.agent.javassist.CtNewMethod;
-import org.hotswap.agent.javassist.bytecode.AccessFlag;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.plugin.hibernate3.session.proxy.SessionFactoryProxy;
+import org.hotswap.agent.plugin.hibernate3.session.util.ProxyUtil;
 import org.hotswap.agent.util.PluginManagerInvoker;
+
 
 /**
  * Static transformers for Hibernate plugin.
@@ -18,20 +19,23 @@ import org.hotswap.agent.util.PluginManagerInvoker;
 public class Hibernate3Transformers {
     private static AgentLogger LOGGER = AgentLogger.getLogger(Hibernate3Transformers.class);
 
-
+    @OnClassLoadEvent(classNameRegexp = "org.hotswap.agent.plugin.hibernate3.session.proxy.ProxySessionFactoryImpl")
+    public static void createSessionFactoryProxy(CtClass dummy, ClassPool classPool, ClassLoader classLoader) throws Exception {
+        
+        ProxyUtil.makeProxy(dummy, classPool.get("org.hibernate.impl.SessionFactoryImpl"), classPool, classLoader);
+  
+    }
     /**
      * Remove final flag from SessionFactoryImpl - we need to create a proxy on session factory and cannot
      * use SessionFactory interface, because hibernate makes type cast to impl.
      */
     @OnClassLoadEvent(classNameRegexp = "org.hibernate.impl.SessionFactoryImpl")
-    public static void removeSessionFactoryImplFinalFlag(CtClass clazz) throws Exception {
-    	int flags = clazz.getClassFile().getAccessFlags();
-    	flags = AccessFlag.setPublic(flags);
-    	flags = AccessFlag.clear(flags, AccessFlag.FINAL);
-        clazz.getClassFile().setAccessFlags(flags);
-        LOGGER.debug("Override org.hibernate.impl.SessionFactoryImpl.");
+    public static void removeSessionFactoryImplFinalFlag(CtClass clazz, ClassPool classPool, ClassLoader classLoader) throws Exception {
+    	ProxyUtil.ensureProxyable(clazz);
+        LOGGER.error("Override org.hibernate.impl.SessionFactoryImpl." + classLoader);
     }
 
+ 
     @OnClassLoadEvent(classNameRegexp = "org.hibernate.cfg.Configuration")
     public static void proxySessionFactory(ClassLoader classLoader, ClassPool classPool, CtClass clazz) throws Exception {
     	
@@ -102,4 +106,6 @@ public class Hibernate3Transformers {
 
         LOGGER.info("Hibernate3Plugin, patched org.hibernate.cfg.Configuration");
     }
+
 }
+

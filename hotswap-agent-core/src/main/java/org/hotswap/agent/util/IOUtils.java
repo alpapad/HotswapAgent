@@ -64,16 +64,26 @@ public class IOUtils {
 				}
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
+			} finally{
+				if(inputStream != null){
+					try {
+						inputStream.close();
+					} catch (IOException e) {
+						throw new IllegalStateException(e);
+					}
+				}
 			}
+			
 		}
 
 		try {
 			byte[] chunk = new byte[4096];
 			int bytesRead;
-			InputStream stream = uri.toURL().openStream();
-
-			while ((bytesRead = stream.read(chunk)) > 0) {
-				outputStream.write(chunk, 0, bytesRead);
+			try(InputStream stream = uri.toURL().openStream()){
+	
+				while ((bytesRead = stream.read(chunk)) > 0) {
+					outputStream.write(chunk, 0, bytesRead);
+				}
 			}
 
 		} catch (IOException e) {

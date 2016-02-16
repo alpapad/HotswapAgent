@@ -90,7 +90,7 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
 				try {
 					File f = new File(uri);
 					//FIXME: hard-coded to exclude wildfly modules
-					if(f.getAbsolutePath().contains("/modules/system/layers/")) {
+					if(f.getAbsolutePath().contains("/modules/system/layers/") || f.getAbsolutePath().contains("\\modules\\system\\layers\\")) {
 						LOGGER.debug("Path is module...:{}", f.getAbsolutePath());
 						continue;
 					}

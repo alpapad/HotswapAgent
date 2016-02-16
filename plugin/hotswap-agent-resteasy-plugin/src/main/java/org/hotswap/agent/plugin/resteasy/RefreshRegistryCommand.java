@@ -145,7 +145,7 @@ public class RefreshRegistryCommand extends MergeableCommand {
 				root.removeBinding(classExpression, path, method);
 			}
 		} catch (Exception e) {
-			LOGGER.error("Could not reload rest class {}", e);
+			LOGGER.error("Could not remove method registration from path {}, {}", e, path, method);
 		}
 	}
 

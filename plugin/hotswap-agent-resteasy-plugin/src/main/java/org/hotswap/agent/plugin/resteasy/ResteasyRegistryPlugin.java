@@ -127,12 +127,12 @@ public class ResteasyRegistryPlugin {
 
 	public void registerContext(Object servletContext) {
 		this.servletContext = servletContext;
-		LOGGER.info("RestEasyPlugin - registered ServletContext {} " + servletContext);
+		LOGGER.info("RestEasyPlugin - registered ServletContext {} ", servletContext);
 	}
 
 	public void registerServletContainerDispatcher(Object servletContainerDispatcher) {
 		this.servletContainerDispatcher = servletContainerDispatcher;
-		LOGGER.info("RestEasyPlugin - registered ServletContainerDispatcher {} " + servletContainerDispatcher);
+		LOGGER.info("RestEasyPlugin - registered ServletContainerDispatcher {} ", servletContainerDispatcher);
 	}
 
 	@OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
@@ -140,7 +140,7 @@ public class ResteasyRegistryPlugin {
 		if (AnnotationHelper.hasAnnotation(original, PATH_ANNOTATION)
 				|| AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION)) {
 			if(LOGGER.isLevelEnabled(Level.TRACE)) {
-				LOGGER.trace("Reload @Path annotated class {}, original classloader {}", clazz.getName(),original.getClassLoader());
+				LOGGER.trace("Reload @Path annotated class {}", clazz.getName());
 			}
 			refreshClass(classLoader, clazz.getName(), original, 250);
 		}
@@ -150,7 +150,7 @@ public class ResteasyRegistryPlugin {
 	public void newEntity(ClassLoader classLoader, CtClass clazz) throws Exception {
 		if (AnnotationHelper.hasAnnotation(clazz, PATH_ANNOTATION)) {
 			if(LOGGER.isLevelEnabled(Level.TRACE)) {
-				LOGGER.trace("Load @Path annotated class {}, classloader {}", clazz.getName(), classLoader);
+				LOGGER.trace("Load @Path annotated class {}", clazz.getName());
 			}
 			refreshClass(classLoader, clazz.getName(), null, 500);
 		}
