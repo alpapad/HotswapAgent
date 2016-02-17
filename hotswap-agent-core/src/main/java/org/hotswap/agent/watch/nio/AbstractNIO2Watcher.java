@@ -23,7 +23,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.AttributeNotFoundException;
+import javax.management.DynamicMBean;
+import javax.management.InvalidAttributeValueException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanConstructorInfo;
+import javax.management.MBeanException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanNotificationInfo;
+import javax.management.MBeanOperationInfo;
+import javax.management.ReflectionException;
+
 import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.WatchFileEvent;
 import org.hotswap.agent.watch.Watcher;
@@ -38,7 +52,7 @@ import org.hotswap.agent.watch.Watcher;
  *
  * @author Jiri Bubnik
  */
-public abstract class AbstractNIO2Watcher implements Watcher {
+public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	protected AgentLogger LOGGER = AgentLogger.getLogger(this.getClass());
 
 	protected final WatchService watcher;
@@ -49,7 +63,10 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 	protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new HashMap<WatchEventListener, ClassLoader>();
 
 	private Thread runner;
+	
 	private boolean stopped;
+	
+	private volatile boolean paused = false;
 
 	public AbstractNIO2Watcher() throws IOException {
 		this.watcher = FileSystems.getDefault().newWatchService();
@@ -70,16 +87,22 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 			// like "file:./src/resources/file.txt".
 			path = new File(pathPrefix);
 		} catch (IllegalArgumentException e) {
-			LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
-			LOGGER.trace("Unable to watch for path {} exception", e, pathPrefix);
+			if (!LOGGER.isLevelEnabled(Level.TRACE)) {
+				LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
+			} else {
+				LOGGER.trace("Unable to watch for path {} exception", e, pathPrefix);
+			}
 			return;
 		}
 
 		try {
 			addDirectory(path.toURI());
 		} catch (IOException e) {
-			LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
-			LOGGER.trace("Unable to watch path with prefix '{}' for changes.", e, pathPrefix);
+			if (!LOGGER.isLevelEnabled(Level.TRACE)) {
+				LOGGER.warning("Unable to watch for path {}, not a local regular file or directory.", pathPrefix);
+			} else {
+				LOGGER.trace("Unable to watch path with prefix '{}' for changes.", e, pathPrefix);
+			}
 			return;
 		}
 
@@ -145,7 +168,6 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 	}
 
 	protected abstract void registerAll(final Path start) throws IOException;
-	
 
 	/**
 	 * Process all events for keys queued to the watcher
@@ -183,8 +205,11 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 
 			LOGGER.trace("Watch event '{}' on '{}'", event.kind().name(), child);
 
-			callListeners(event, child);
-
+			if(!paused) {
+				callListeners(event, child);
+			}else {
+				LOGGER.debug("Polling is paused...");
+			}
 			// if directory is created, and watching recursively, then
 			// register it and its sub-directories
 			if (kind == ENTRY_CREATE) {
@@ -228,6 +253,7 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 
 	@Override
 	public void run() {
+
 		runner = new Thread() {
 			@Override
 			public void run() {
@@ -245,6 +271,60 @@ public abstract class AbstractNIO2Watcher implements Watcher {
 	@Override
 	public void stop() {
 		stopped = true;
+	}
+
+
+
+	public boolean isPaused() {
+		return paused;
+	}
+
+	public void setPaused(boolean paused) {
+		this.paused = paused;
+	}
+
+	@Override
+	public Object getAttribute(String attribute)
+			throws AttributeNotFoundException, MBeanException, ReflectionException {
+		return paused;
+	}
+
+	@Override
+	public void setAttribute(Attribute attribute)
+			throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
+		paused = (Boolean) attribute.getValue();
+
+	}
+
+	@Override
+	public AttributeList getAttributes(String[] attributes) {
+		AttributeList l = new AttributeList();
+		l.add(new Attribute("paused", paused));
+		return l;
+	}
+
+	@Override
+	public AttributeList setAttributes(AttributeList attributes) {
+		AttributeList l = new AttributeList();
+		l.add(new Attribute("paused", paused));
+		return l;
+	}
+
+	@Override
+	public Object invoke(String actionName, Object[] params, String[] signature)
+			throws MBeanException, ReflectionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public MBeanInfo getMBeanInfo() {
+
+		MBeanAttributeInfo attr = new MBeanAttributeInfo("paused", "boolean", "paused", true, true, true);
+
+		MBeanInfo info = new MBeanInfo(this.getClass().getName(), "HotSwap", new MBeanAttributeInfo[] { attr },
+				new MBeanConstructorInfo[] {}, new MBeanOperationInfo[] {}, new MBeanNotificationInfo[] {});
+		return info;
 	}
 
 }

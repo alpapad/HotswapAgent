@@ -35,6 +35,7 @@
 		<module>plugin/hotswap-agent-hibernate-plugin</module>
 		<module>plugin/hotswap-agent-hibernate3-plugin</module>
 		<module>hotswap-agent</module>
+		<module>hotswap-agent-client</module>
 	</modules>
 
 	<licenses>

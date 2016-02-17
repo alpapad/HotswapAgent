@@ -3,6 +3,7 @@ package org.hotswap.agent.config;
 import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -10,6 +11,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
+import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.impl.SchedulerImpl;
 import org.hotswap.agent.logging.AgentLogger;
@@ -141,8 +150,26 @@ public class PluginManager {
 
 		LOGGER.debug("Registering transformer ");
 		instrumentation.addTransformer(hotswapTransformer);
+		scheduler.scheduleCommand(new Command() {
+			@Override
+			public void executeCommand() {
+				startMbean();
+			}
+		}, 3000);				
 	}
 
+	public void startMbean(){
+		try {  
+		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+	       ObjectName name = new ObjectName("org.hotswap.agent:type=Watcher"); 
+	        if(!mbs.isRegistered(name))  {
+	        	mbs.registerMBean(watcher, name);
+	        }
+		} catch(MalformedObjectNameException| InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+			LOGGER.error("Error registering Watcher mbean server", e);
+		}	
+	}
+	
 	ClassLoaderPatcher classLoaderPatcher = new ClassLoaderDefineClassPatcher();
 	Map<ClassLoader, PluginConfiguration> classLoaderConfigurations = new HashMap<ClassLoader, PluginConfiguration>();
 	Set<ClassLoaderInitListener> classLoaderInitListeners = new HashSet<ClassLoaderInitListener>();

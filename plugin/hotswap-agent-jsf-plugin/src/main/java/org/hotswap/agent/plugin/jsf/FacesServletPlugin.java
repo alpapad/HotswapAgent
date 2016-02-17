@@ -20,6 +20,7 @@ import org.hotswap.agent.command.MergeableCommand;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
 import org.hotswap.agent.config.PluginConfiguration;
+import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
@@ -75,6 +76,7 @@ public class FacesServletPlugin {
 	@Init
 	public void initializeInstance(PluginConfiguration pluginConfiguration) {
 		LOGGER.info("FacesServletPlugin 2.2 plugin Initialized INSTANCE at classLoader {}, pluginConfiguration: {}", appClassLoader, pluginConfiguration);
+//        PluginManager.getInstance().startMbean();
 	}
 
 	public void setRealPath(String realPath) {

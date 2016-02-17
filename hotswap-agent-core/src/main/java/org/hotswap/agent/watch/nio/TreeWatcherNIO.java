@@ -60,6 +60,4 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 	protected void registerAll(final Path start) throws IOException {
 		register(start);
 	}
-
-
 }
