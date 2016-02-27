@@ -194,10 +194,13 @@ public class PluginManager {
 			return;
 		}
 
-		// parent of current classloader (system/bootstrap)
-		if (getClass().getClassLoader() != null && classLoader.equals(getClass().getClassLoader().getParent())) {
-			return;
-		}
+
+        // parent of current classloader (system/bootstrap)
+        if (getClass().getClassLoader() != null &&
+            classLoader != null &&
+            classLoader.equals(getClass().getClassLoader().getParent())){
+            return;
+        }
 
 		// synchronize ClassLoader patching - multiple classloaders may be
 		// patched at the same time
@@ -208,11 +211,11 @@ public class PluginManager {
 				return;
 			}
 
-			// transformation
-			if (classLoaderPatcher.isPatchAvailable(classLoader)) {
-				classLoaderPatcher.patch(getClass().getClassLoader(), PLUGIN_PACKAGE.replace(".", "/"), classLoader,
-						protectionDomain);
-			}
+            // transformation
+            if (classLoader != null && classLoaderPatcher.isPatchAvailable(classLoader)) {
+                classLoaderPatcher.patch(getClass().getClassLoader(), PLUGIN_PACKAGE.replace(".", "/"),
+                        classLoader, protectionDomain);
+            }
 
 			// create new configuration for the classloader
 			PluginConfiguration configuration = new PluginConfiguration(getPluginConfiguration(getClass().getClassLoader()), classLoader);

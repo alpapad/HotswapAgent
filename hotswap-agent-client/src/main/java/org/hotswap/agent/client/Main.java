@@ -27,6 +27,7 @@ import sun.jvmstat.monitor.VmIdentifier;
 import sun.management.ConnectorAddressLink;
 import sun.tools.jps.Arguments;
 
+@SuppressWarnings("restriction")
 public class Main {
 
 	public static void main(String[] args) throws MalformedObjectNameException, AttributeNotFoundException,

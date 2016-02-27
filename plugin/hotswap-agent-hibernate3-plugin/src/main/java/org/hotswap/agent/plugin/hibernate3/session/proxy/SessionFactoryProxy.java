@@ -21,6 +21,7 @@ import org.hotswap.agent.javassist.util.proxy.ProxyFactory;
  *
  * @author Jiri Bubnik
  */
+@SuppressWarnings("restriction")
 public class SessionFactoryProxy {
 	private static Map<Configuration, SessionFactoryProxy> proxiedFactories = new HashMap<Configuration, SessionFactoryProxy>();
 

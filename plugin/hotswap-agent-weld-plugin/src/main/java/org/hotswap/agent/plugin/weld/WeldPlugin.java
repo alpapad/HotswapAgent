@@ -49,6 +49,7 @@ public class WeldPlugin {
      * Wait for this this timeout(milliseconds) after class file event before ClassPathBeanRefreshCommand
      */
     private static final int WAIT_ON_CREATE = 600;
+    private static final int WAIT_ON_REDEFINE = 600;
 
     @Init
     Watcher watcher;
@@ -114,7 +115,7 @@ public class WeldPlugin {
                                 // refresh weld only for new classes
                                 LOGGER.trace("register reload command: {} ", className);
                                 if (isBdaRegistered(appClassLoader, archivePath)) {
-                                    // TODO : Create proxy factory ?
+                                    // TODO : Create proxy factory
                                     scheduler.scheduleCommand(new BeanClassRefreshCommand(appClassLoader, archivePath, event), WAIT_ON_CREATE);
                                 }
                             }
@@ -170,12 +171,14 @@ public class WeldPlugin {
      */
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
     public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
-        if (!isSyntheticWeldClass(ctClass.getName()) && original != null) {
+        if (!isSyntheticCdiClass(ctClass.getName()) && original != null) {
             try {
                 String archivePath = getArchivePath(classLoader, original.getName());
                 LOGGER.info("Class {} redefined for archive {} ", original.getName(), archivePath);
                 if (isBdaRegistered(classLoader, archivePath)) {
-                    scheduler.scheduleCommand(new BeanClassRefreshCommand(classLoader, archivePath, registeredProxiedBeans, original.getName()), WAIT_ON_CREATE);
+                    String oldSignature = ProxyClassSignatureHelper.getJavaClassSignature(original);
+                    scheduler.scheduleCommand(new BeanClassRefreshCommand(classLoader, archivePath,
+                            registeredProxiedBeans, original.getName(), oldSignature), WAIT_ON_REDEFINE);
                 }
             } catch (Exception e) {
                 LOGGER.error("classReload() exception {}.", e, e.getMessage());
@@ -199,8 +202,11 @@ public class WeldPlugin {
 //        return (new File(archivePath)).toPath().toString();
     }
 
-    private boolean isSyntheticWeldClass(String className) {
-        return className.contains("$Proxy$") || className.contains("$$$");
+    // Return true if class is CDI synthetic class.
+    // Weld proxies contains $Proxy$ and $$$
+    // DeltaSpike's proxies contains "$$"
+    private boolean isSyntheticCdiClass(String className) {
+        return className.contains("$Proxy$") || className.contains("$$");
     }
 
 }

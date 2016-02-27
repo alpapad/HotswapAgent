@@ -175,41 +175,39 @@ public class HotswapTransformer implements ClassFileTransformer {
 		if (!seenClassLoaders.containsKey(classLoader)) {
 			seenClassLoaders.put(classLoader, null);
 
-			// ensure the classloader should not be excluded
-			if (!excludedClassLoaders.contains(classLoader.getClass().getName())) {
-				// schedule the excecution
-				PluginManager.getInstance().getScheduler().scheduleCommand(new Command() {
-					@Override
-					public void executeCommand() {
-						PluginManager.getInstance().initClassLoader(classLoader, protectionDomain);
-					}
 
-					@Override
-					public String toString() {
-						return "executeCommand: initClassLoader(" + classLoader + ")";
-					}
-				}, 1000);
-			}
+            if (classLoader == null) {
+                // directly init null (bootstrap) classloader
+                PluginManager.getInstance().initClassLoader(null, protectionDomain);
+            } else {
+                // ensure the classloader should not be excluded
+                if (!excludedClassLoaders.contains(classLoader.getClass().getName())) {
+                    // schedule the excecution
+                    PluginManager.getInstance().getScheduler().scheduleCommand(new Command() {
+                        @Override
+                        public void executeCommand() {
+                            PluginManager.getInstance().initClassLoader(classLoader, protectionDomain);
+                        }
+                    });
+                }
+            }
 		}
 	}
 
-	/**
-	 * Transform type to ^regexp$ form - match only whole pattern.
-	 *
-	 * @param registeredType
-	 *            type
-	 * @return
-	 */
-	protected String normalizeTypeRegexp(String registeredType) {
-		String regexp = registeredType;
-		if (!registeredType.startsWith("^")) {
-			regexp = "^" + regexp;
-		}
-		if (!registeredType.endsWith("$")) {
-			regexp = regexp + "$";
-		}
+    /**
+     * Transform type to ^regexp$ form - match only whole pattern.
+     *
+     * @param registeredType type
+     * @return
+     */
+    protected String normalizeTypeRegexp(String registeredType) {
+        String regexp = registeredType;
+        if (!registeredType.startsWith("^"))
+            regexp = "^" + regexp;
+        if (!registeredType.endsWith("$"))
+            regexp = regexp + "$";
 
-		return regexp;
-	}
+        return regexp;
+    }
 
 }

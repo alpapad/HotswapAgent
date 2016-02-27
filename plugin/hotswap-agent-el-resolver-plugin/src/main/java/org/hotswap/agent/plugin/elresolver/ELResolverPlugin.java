@@ -82,7 +82,6 @@ public class ELResolverPlugin {
             // check if we have purgeBeanClasses method
             ctClass.getDeclaredMethod("purgeBeanClasses");
             ctClass.addMethod(CtNewMethod.make("public void " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader) {" +
-                    "   java.beans.Introspector.flushCaches(); " +
                     "   purgeBeanClasses(classLoader); " +
                     "}", ctClass));
             return true;
@@ -107,7 +106,6 @@ public class ELResolverPlugin {
             mGetBeanProperty.insertBefore(
                 "   if(__purgeRequested) {" +
                 "       __purgeRequested=false;" +
-                "       java.beans.Introspector.flushCaches(); " +
                 "       this.cache = new javax.el.BeanELResolver.ConcurrentCache(CACHE_SIZE); " +
                 "   }");
             return true;
@@ -151,7 +149,6 @@ public class ELResolverPlugin {
                 mGetBeanProperty.insertBefore(
                     "   if(__purgeRequested) {" +
                     "       __purgeRequested=false;" +
-                    "       java.beans.Introspector.flushCaches(); " +
                     "       java.lang.reflect.Method meth = javax.el.BeanELResolver.SoftConcurrentHashMap.class.getDeclaredMethod(\"__createNewInstance\", null);" +
                     "       properties = (javax.el.BeanELResolver.SoftConcurrentHashMap) meth.invoke(properties, null);" +
                     "   }");
