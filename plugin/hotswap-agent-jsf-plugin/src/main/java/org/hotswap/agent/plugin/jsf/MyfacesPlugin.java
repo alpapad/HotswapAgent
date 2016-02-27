@@ -21,6 +21,19 @@ public class MyfacesPlugin {
 
 	private static AgentLogger LOGGER = AgentLogger.getLogger(FacesServletPlugin.class);
 
+
+	@OnClassLoadEvent(classNameRegexp = "org.apache.myfaces.ee6.MyFacesContainerInitializer")
+	public static void patchMyFacesContainerInitializer(ClassPool classPool, CtClass ctClass) {
+		try {
+			ctClass.getDeclaredMethod("onStartup",	new CtClass[] {classPool.get("java.util.Set"), classPool.get("javax.servlet.ServletContext") })//
+					.insertBefore(ApplyFacesDevParams.class.getName() + ".apply(servletContext);");
+			LOGGER.info("Patched org.apache.myfaces.ee6.MyFacesContainerInitializer");
+		} catch (NotFoundException | CannotCompileException e) {
+			LOGGER.error("Error patching org.apache.myfaces.webapp.StartupServletContextListener", e);
+		}
+	}
+	
+	
 	@OnClassLoadEvent(classNameRegexp = "org.apache.myfaces.webapp.StartupServletContextListener")
 	public static void startupServletContextListener(ClassPool classPool, CtClass ctClass) {
 		try {

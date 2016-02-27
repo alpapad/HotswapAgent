@@ -19,12 +19,6 @@ import org.hotswap.agent.util.PluginManagerInvoker;
 public class Hibernate3Transformers {
     private static AgentLogger LOGGER = AgentLogger.getLogger(Hibernate3Transformers.class);
 
-    @OnClassLoadEvent(classNameRegexp = "org.hotswap.agent.plugin.hibernate3.session.proxy.ProxySessionFactoryImpl")
-    public static void createSessionFactoryProxy(CtClass dummy, ClassPool classPool, ClassLoader classLoader) throws Exception {
-        
-        ProxyUtil.makeProxy(dummy, classPool.get("org.hibernate.impl.SessionFactoryImpl"), classPool, classLoader);
-  
-    }
     /**
      * Remove final flag from SessionFactoryImpl - we need to create a proxy on session factory and cannot
      * use SessionFactory interface, because hibernate makes type cast to impl.

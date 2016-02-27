@@ -113,5 +113,5 @@ public class HotswapAgent {
 
 	public static final String HOTSWAP_AGENT_EXPORT_PACKAGES = "org.hotswap.agent.annotation,"
 			+ "org.hotswap.agent.command," + "org.hotswap.agent.config," + "org.hotswap.agent.logging,"
-			+ "org.hotswap.agent.plugin," + "org.hotswap.agent.util," + "org.hotswap.agent.watch";
+			+ "org.hotswap.agent.plugin," + "org.hotswap.agent.util," + "org.hotswap.agent.watch," + "org.hotswap.agent.javassist";
 }

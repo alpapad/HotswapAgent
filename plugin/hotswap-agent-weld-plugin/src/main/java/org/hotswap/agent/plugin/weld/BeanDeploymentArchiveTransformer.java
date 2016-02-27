@@ -28,7 +28,6 @@ public class BeanDeploymentArchiveTransformer {
      */
     @OnClassLoadEvent(classNameRegexp = "org.jboss.weld.environment.deployment.WeldBeanDeploymentArchive")
     public static void transform(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
-
         CtClass[] constructorParams = new CtClass[] {
             classPool.get("java.lang.String"),
             classPool.get("java.util.Collection"),
@@ -59,7 +58,7 @@ public class BeanDeploymentArchiveTransformer {
     @OnClassLoadEvent(classNameRegexp = "org.jboss.as.weld.deployment.BeanDeploymentArchiveImpl")
     public static void transformJbossBda(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
         StringBuilder src = new StringBuilder("{");
-        src.append("if (beansXml!=null&& beanArchiveType!=null && \"EXPLICIT\".equals(beanArchiveType.toString())){");
+        src.append("if (beansXml!=null&& beanArchiveType!=null && (\"EXPLICIT\".equals(beanArchiveType.toString()) || \"IMPLICIT\".equals(beanArchiveType.toString()))){");
         src.append("  String beansXmlPath = beansXml.getUrl().getPath();");
         src.append("  String archPath = null;");
         src.append("  if(beansXmlPath.endsWith(\"META-INF/beans.xml\")) {");
@@ -83,4 +82,5 @@ public class BeanDeploymentArchiveTransformer {
         LOGGER.debug("Class 'org.jboss.as.weld.deployment.BeanDeploymentArchiveImpl' patched with BDA registration.");
     }
 
+    
 }

@@ -67,22 +67,22 @@ public class BeanDeploymentArchiveAgent {
     public static void registerArchive(ClassLoader classLoader, BeanDeploymentArchive beanArchive, String archivePath) {
         BeanDeploymentArchiveAgent bdaAgent = null;
         try {
+        	LOGGER.debug("BeanDeploymentArchiveAgent registerArchive bdaId='{}' archivePath='{}'.", beanArchive.getId(), archivePath);
             // check that it is regular file
             // toString() is weird and solves HiearchicalUriException for URI like "file:./src/resources/file.txt".
             File path = new File(archivePath);
-            boolean contain = (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader),
-                    "contains", new Class[] {String.class}, archivePath);
+            boolean contain = (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "contains", new Class[] {String.class}, archivePath);
             if (!contain) {
                 bdaAgent = new BeanDeploymentArchiveAgent(beanArchive, archivePath);
                 ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader),
                     "put", new Class[] {String.class, BeanDeploymentArchiveAgent.class}, archivePath, bdaAgent);
+                bdaAgent.register();
             }
-            bdaAgent.register();
         } catch (IllegalArgumentException e) {
             LOGGER.warning("Unable to watch BeanDeploymentArchive with id={}", beanArchive.getId());
         }
         catch (Exception e) {
-            LOGGER.error("registerArchive() exception {}.", e.getMessage());
+            LOGGER.error("registerArchive() exception {}.",e, e.getMessage());
         }
 
 
@@ -125,7 +125,7 @@ public class BeanDeploymentArchiveAgent {
             registered = true;
             PluginManagerInvoker.callPluginMethod(WeldPlugin.class, getClass().getClassLoader(),
                     "registerBeanDeplArchivePath", new Class[]{String.class}, new Object[]{archivePath});
-            LOGGER.debug("BeanDeploymentArchiveAgent registered bdaId='{}' archivePath='{}'.", getBdaId(), archivePath);
+            LOGGER.info("BeanDeploymentArchiveAgent registered bdaId='{}' archivePath='{}'.", getBdaId(), archivePath);
         }
     }
 
@@ -137,9 +137,7 @@ public class BeanDeploymentArchiveAgent {
      * @param beanClassName
      * @throws IOException error working with classDefinition
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static void refreshBeanClass(ClassLoader classLoader, String archivePath,
-            Map registeredProxiedBeans, String beanClassName) throws IOException {
+    public static void refreshBeanClass(ClassLoader classLoader, String archivePath, Map<Object, Object> registeredProxiedBeans, String beanClassName) throws IOException {
         BeanDeploymentArchiveAgent bdaAgent = BdaAgentRegistry.get(archivePath);
         if (bdaAgent == null) {
             LOGGER.error("Archive path '{}' is not associated with any BeanDeploymentArchiveAgent", archivePath);
@@ -231,7 +229,7 @@ public class BeanDeploymentArchiveAgent {
                 managedBean.getProducer().inject(get, beanManager.createCreationalContext(managedBean));
             }
         } catch (org.jboss.weld.context.ContextNotActiveException e) {
-            LOGGER.warning("No active contexts for {}", beanClass.getName());
+            LOGGER.warning("No active contexts for {}",e, beanClass.getName());
         }
     }
 
@@ -277,21 +275,22 @@ public class BeanDeploymentArchiveAgent {
 
             for (Entry<Object, Object> entry : registeredBeans.entrySet()) {
                 Bean<?> bean = (Bean<?>) entry.getKey();
-                Set<Type> types = bean.getTypes();
-                if (types.contains(cls)) {
-                    Thread.currentThread().setContextClassLoader(bean.getBeanClass().getClassLoader());
-                    if (proxyFactoryClass == null) {
-                        proxyFactoryClass = classLoader.loadClass("org.jboss.weld.bean.proxy.ProxyFactory");
-                    }
-                    Object proxyFactory = entry.getValue();
-                    LOGGER.debug("Recreate proxyClass {} for bean class {}.", cls.getName(), bean.getClass());
-                    ReflectionHelper.invoke(proxyFactory, proxyFactoryClass, "getProxyClass", new Class[] {});
+                if(bean != null) {
+	                Set<Type> types = bean.getTypes();
+	                if (types.contains(cls)) {
+	                    Thread.currentThread().setContextClassLoader(bean.getBeanClass().getClassLoader());
+	                    if (proxyFactoryClass == null) {
+	                        proxyFactoryClass = classLoader.loadClass("org.jboss.weld.bean.proxy.ProxyFactory");
+	                    }
+	                    Object proxyFactory = entry.getValue();
+	                    LOGGER.debug("Recreate proxyClass {} for bean class {}.", cls.getName(), bean.getClass());
+	                    ReflectionHelper.invoke(proxyFactory, proxyFactoryClass, "getProxyClass", new Class[] {});
+	                }
                 }
             }
 
         } catch (Exception e) {
-            LOGGER.error("recreateProxyFactory() exception {}.", e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("recreateProxyFactory() exception {}.", e, e.getMessage());
         } finally {
             Thread.currentThread().setContextClassLoader(oldContextClassLoader);
             ProxyClassLoadingDelegate.endProxyRegeneration();

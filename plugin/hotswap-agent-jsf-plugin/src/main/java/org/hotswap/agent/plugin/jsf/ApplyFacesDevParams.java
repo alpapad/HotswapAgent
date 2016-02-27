@@ -45,13 +45,17 @@ import org.hotswap.agent.logging.AgentLogger.Level;
 public class ApplyFacesDevParams {
 	private static AgentLogger LOGGER = AgentLogger.getLogger(ApplyFacesDevParams.class);
 
-	public static void apply(final ServletContext context) {
-		LOGGER.info("Applying ServletContext JSF Development parameters");
-
+	public static void apply(final ServletContext context) {	
 		// Maybe configurable?
+		context.removeAttribute("javax.faces.FACELETS_REFRESH_PERIOD");
 		context.setAttribute("javax.faces.FACELETS_REFRESH_PERIOD", "1");
+		
+		context.removeAttribute("facelets.REFRESH_PERIOD");
 		context.setAttribute("facelets.REFRESH_PERIOD", "1");
+		
+		context.removeAttribute("javax.faces.PROJECT_STAGE");
 		context.setAttribute("javax.faces.PROJECT_STAGE", "Development");
+
 		context.setInitParameter("javax.faces.FACELETS_REFRESH_PERIOD", "1");
 		context.setInitParameter("javax.faces.PROJECT_STAGE", "Development");
 		context.setInitParameter("facelets.REFRESH_PERIOD", "1");

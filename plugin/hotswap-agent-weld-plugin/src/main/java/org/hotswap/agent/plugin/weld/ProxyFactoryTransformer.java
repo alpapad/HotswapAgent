@@ -33,11 +33,11 @@ public class ProxyFactoryTransformer {
      */
     @OnClassLoadEvent(classNameRegexp = "org.jboss.weld.bean.proxy.ProxyFactory")
     public static void patchProxyFactory(CtClass ctClass, ClassPool classPool) throws NotFoundException, CannotCompileException {
-
         CtClass[] constructorParams = new CtClass[] {
             classPool.get("java.lang.String"),
             classPool.get("java.lang.Class"),
             classPool.get("java.util.Set"),
+            classPool.get("java.lang.String"),
             classPool.get("javax.enterprise.inject.spi.Bean"),
             classPool.get("boolean")
         };

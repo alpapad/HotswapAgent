@@ -122,6 +122,7 @@ public class WeldPlugin {
                     }
                 });
             }
+            LOGGER.info("Registered  watch for path '{}' for changes.", resource);
         } catch (URISyntaxException e) {
             LOGGER.error("Unable to watch path '{}' for changes.", e, resource);
         } catch (Exception e) {
@@ -145,8 +146,7 @@ public class WeldPlugin {
     private static boolean isBdaRegistered(ClassLoader classLoader, String archivePath) {
         if (archivePath != null) {
             try {
-                return (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader),
-                        "contains", new Class[] {String.class}, archivePath);
+                return (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "contains", new Class[] {String.class}, archivePath);
             } catch (ClassNotFoundException e) {
                 LOGGER.error("isBdaRegistered() exception {}.", e.getMessage());
             }
@@ -158,7 +158,7 @@ public class WeldPlugin {
         synchronized(registeredProxiedBeans) {
             registeredProxiedBeans.put(bean, proxyFactory);
         }
-        LOGGER.debug("Registering ProxyFactory : " + proxyFactory.getClass().getName());
+        LOGGER.info("Registering ProxyFactory : " + proxyFactory.getClass().getName());
     }
 
     /**
@@ -172,23 +172,31 @@ public class WeldPlugin {
     public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
         if (!isSyntheticWeldClass(ctClass.getName()) && original != null) {
             try {
-                String archivePath = getArchivePath(ctClass);
+                String archivePath = getArchivePath(classLoader, original.getName());
+                LOGGER.info("Class {} redefined for archive {} ", original.getName(), archivePath);
                 if (isBdaRegistered(classLoader, archivePath)) {
-                    scheduler.scheduleCommand(new BeanClassRefreshCommand(classLoader, archivePath,
-                            registeredProxiedBeans, original.getName()), WAIT_ON_CREATE);
+                    scheduler.scheduleCommand(new BeanClassRefreshCommand(classLoader, archivePath, registeredProxiedBeans, original.getName()), WAIT_ON_CREATE);
                 }
             } catch (Exception e) {
-                LOGGER.error("classReload() exception {}.", e.getMessage());
+                LOGGER.error("classReload() exception {}.", e, e.getMessage());
             }
         }
     }
 
-    private String getArchivePath(CtClass ctClass) throws NotFoundException {
-        String classFilePath = ctClass.getURL().getPath();
-        String className = ctClass.getName().replace(".", "/");
-        // archive path ends with '/' therefore we set end position before the '/' (-1)
-        String archivePath = classFilePath.substring(0, classFilePath.indexOf(className) - 1);
-        return (new File(archivePath)).toPath().toString();
+    private String getArchivePath(ClassLoader classLoader, String className) throws NotFoundException {
+         try {
+             return (String) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "getArchiveByClassName", new Class[] {String.class}, className);
+         } catch (ClassNotFoundException e) {
+             LOGGER.error("getArchivePath() exception {}.", e.getMessage());
+         }
+         return null;
+//         
+//    	getArchiveByClassName()
+//        String classFilePath = ctClass.getURL().getPath();
+//        String className = ctClass.getName().replace(".", "/");
+//        // archive path ends with '/' therefore we set end position before the '/' (-1)
+//        String archivePath = classFilePath.substring(0, classFilePath.indexOf(className) - 1);
+//        return (new File(archivePath)).toPath().toString();
     }
 
     private boolean isSyntheticWeldClass(String className) {

@@ -136,7 +136,7 @@ public class ModuleClassLoaderTransformer {
                     "}", ctClass)
             );
         } catch (NotFoundException e) {
-            LOGGER.warning("Unable to find methos \"getAllPaths()\" in org.jboss.modules.Paths.", e);
+            LOGGER.warning("Unable to find method \"getAllPaths()\" in org.jboss.modules.Paths.", e);
         }
     }
 
