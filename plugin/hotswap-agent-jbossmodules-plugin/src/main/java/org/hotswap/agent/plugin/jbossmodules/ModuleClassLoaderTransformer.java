@@ -79,14 +79,7 @@ public class ModuleClassLoaderTransformer {
             methRecalculate.setName("_recalculate");
             
             ctClass.addMethod(CtNewMethod.make("boolean recalculate() {boolean ret=_recalculate(); __setupPrepend();return ret;}", ctClass));
-//            methRecalculate.setBody(
-//                    "{" +
-//                    "   final org.jboss.modules.Paths p = this.paths.get();" +
-//                    "   boolean ret = setResourceLoaders(p, (org.jboss.modules.ResourceLoaderSpec[])p.getSourceList(NO_RESOURCE_LOADERS));" +
-//                    "   __setupPrepend();" +
-//                    "   return ret;" +
-//                    "}"
-//            );
+
 
             CtClass ctResLoadClass = classPool.get("org.jboss.modules.ResourceLoaderSpec[]");
 

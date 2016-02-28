@@ -6,6 +6,7 @@ import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
+import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.CtConstructor;
@@ -54,4 +55,8 @@ public class WildFlyELResolverPlugin {
         scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
     }
 
+	@Init
+	public void initializeInstance(PluginConfiguration pluginConfiguration) {
+		LOGGER.info("WildFlyELResolverPlugin Initializing");
+	}
 }

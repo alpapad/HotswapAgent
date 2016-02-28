@@ -119,7 +119,7 @@ public class WatchHandler<T extends Annotation> implements PluginHandler<T> {
 					Path watchResourcePath = Paths.get(url.toURI());
 					Path pathInWatchResource = watchResourcePath.resolve(path);
 					if (pathInWatchResource.toFile().exists()) {
-						LOGGER.debug("Registering resource listener on watchResources URI {}",	pathInWatchResource.toUri());
+						LOGGER.info("Registering resource listener on watchResources URI {}",	pathInWatchResource.toUri());
 						registerResourceListener(pluginAnnotation, watchEventDTO, classLoader,	pathInWatchResource.toUri());
 					}
 				} catch (URISyntaxException e) {

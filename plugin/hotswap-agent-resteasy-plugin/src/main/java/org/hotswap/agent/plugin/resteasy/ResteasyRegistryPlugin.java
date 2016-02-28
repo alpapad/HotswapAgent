@@ -25,6 +25,7 @@ import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.Scheduler;
+import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
@@ -167,5 +168,10 @@ public class ResteasyRegistryPlugin {
 		} catch (Exception e) {
 			LOGGER.error("refreshClass() exception {}.", e.getMessage());
 		}
+	}
+
+	@Init
+	public void initializeInstance(PluginConfiguration pluginConfiguration) {
+		LOGGER.info("ResteasyRegistryPlugin Initializing");
 	}
 }

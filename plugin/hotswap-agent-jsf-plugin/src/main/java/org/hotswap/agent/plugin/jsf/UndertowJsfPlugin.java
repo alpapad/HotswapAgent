@@ -1,7 +1,9 @@
 package org.hotswap.agent.plugin.jsf;
 
+import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.annotation.Plugin;
+import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
@@ -14,7 +16,7 @@ import org.hotswap.agent.logging.AgentLogger;
  * 
  * @author alpapad
  */
-@Plugin(name = "UndertowJsfPlugin", //
+@Plugin(name = "UndertowJsf", //
 		description = "Set jsf project to development stage, enabling facelets refresh", //
 		testedVersions = { "?" }, //
 		expectedVersions = { "?" })
@@ -41,4 +43,9 @@ public class UndertowJsfPlugin {
 			LOGGER.error("Error patching io.undertow.servlet.spec.ServletContextImpl", e);
 		}
 	}
+	
+	@Init
+	public void initializeInstance(PluginConfiguration pluginConfiguration) {
+		LOGGER.info("UndertowJsf  plugin Initializing");
+	}	
 }

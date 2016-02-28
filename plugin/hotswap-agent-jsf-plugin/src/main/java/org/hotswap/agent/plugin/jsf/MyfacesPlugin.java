@@ -1,7 +1,9 @@
 package org.hotswap.agent.plugin.jsf;
 
+import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.annotation.Plugin;
+import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
@@ -44,4 +46,9 @@ public class MyfacesPlugin {
 			LOGGER.error("Error patching org.apache.myfaces.webapp.StartupServletContextListener", e);
 		}
 	}
+	
+	@Init
+	public void initializeInstance(PluginConfiguration pluginConfiguration) {
+		LOGGER.info("MyfacesPlugin plugin Initializing");
+	}	
 }

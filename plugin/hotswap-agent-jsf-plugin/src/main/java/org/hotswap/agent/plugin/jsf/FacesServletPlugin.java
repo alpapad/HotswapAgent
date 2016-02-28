@@ -74,7 +74,7 @@ public class FacesServletPlugin {
 
 	@Init
 	public void initializeInstance(PluginConfiguration pluginConfiguration) {
-		LOGGER.info("FacesServletPlugin 2.2 plugin Initialized INSTANCE at classLoader {}, pluginConfiguration: {}", appClassLoader, pluginConfiguration);
+		LOGGER.info("FacesServletPlugin 2.2 plugin Initializing INSTANCE at classLoader {}, pluginConfiguration: {}", appClassLoader, pluginConfiguration);
 	}
 
 	public void setRealPath(String realPath) {
