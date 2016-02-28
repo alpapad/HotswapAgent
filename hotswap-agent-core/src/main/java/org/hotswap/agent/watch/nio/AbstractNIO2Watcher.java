@@ -293,6 +293,8 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	public void setAttribute(Attribute attribute)
 			throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
 		paused = (Boolean) attribute.getValue();
+		
+		LOGGER.info("Setting wather to paused = '{}'",  paused);
 
 	}
 

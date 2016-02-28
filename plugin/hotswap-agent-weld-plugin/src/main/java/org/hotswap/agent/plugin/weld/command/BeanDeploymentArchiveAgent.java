@@ -200,7 +200,7 @@ public class BeanDeploymentArchiveAgent {
                            LOGGER.warning("reloadBean() : class '{}' reloading is not implemented.", bean.getClass().getName());
                         }
                     }
-                    LOGGER.info("Bean reloaded '{}'", beanClass.getName());
+                    LOGGER.debug("Bean reloaded '{}'", beanClass.getName());
                 } else {
                     try {
                         ClassTransformer classTransformer = getClassTransformer();
@@ -211,10 +211,10 @@ public class BeanDeploymentArchiveAgent {
                             EnhancedAnnotatedType eat = EnhancedAnnotatedTypeImpl.of(annotatedType, classTransformer);
                             defineManagedBean(beanManager, eat);
                             // define managed bean beanManager.cleanupAfterBoot();
-                            LOGGER.info("Bean defined '{}'", beanClass.getName());
+                            LOGGER.debug("Bean defined '{}'", beanClass.getName());
                         } else {
                             // TODO : define session bean
-                        	LOGGER.info("Bean NOT? defined '{}', session bean?", beanClass.getName());
+                        	LOGGER.warn("Bean NOT? defined '{}', session bean?", beanClass.getName());
                         }
                     } catch (Exception e) {
                         LOGGER.debug("Bean definition failed", e);
