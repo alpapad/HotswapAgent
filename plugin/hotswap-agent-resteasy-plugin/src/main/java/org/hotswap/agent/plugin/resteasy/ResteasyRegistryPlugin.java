@@ -127,12 +127,12 @@ public class ResteasyRegistryPlugin {
 
 	public void registerContext(Object servletContext) {
 		this.servletContext = servletContext;
-		LOGGER.info("RestEasyPlugin - registered ServletContext {} ", servletContext);
+		LOGGER.info("Registered ServletContext {} ", servletContext);
 	}
 
 	public void registerServletContainerDispatcher(Object servletContainerDispatcher) {
 		this.servletContainerDispatcher = servletContainerDispatcher;
-		LOGGER.info("RestEasyPlugin - registered ServletContainerDispatcher {} ", servletContainerDispatcher);
+		LOGGER.info("Registered ServletContainerDispatcher {} ", servletContainerDispatcher);
 	}
 
 	@OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
