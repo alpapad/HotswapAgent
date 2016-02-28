@@ -214,7 +214,7 @@ public class BeanDeploymentArchiveAgent {
                             LOGGER.debug("Bean defined '{}'", beanClass.getName());
                         } else {
                             // TODO : define session bean
-                        	LOGGER.warn("Bean NOT? defined '{}', session bean?", beanClass.getName());
+                        	LOGGER.warning("Bean NOT? defined '{}', session bean?", beanClass.getName());
                         }
                     } catch (Exception e) {
                         LOGGER.debug("Bean definition failed", e);
