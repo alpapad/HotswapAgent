@@ -107,7 +107,7 @@ public class PluginManager {
 	 * @return true/false
 	 */
 	public boolean isPluginInitialized(String pluginClassName, ClassLoader classLoader) {
-		Class<Object> pluginClass = pluginRegistry.getPluginClass(pluginClassName);
+		Class<?> pluginClass = pluginRegistry.getPluginClass(pluginClassName);
 		return pluginClass != null && pluginRegistry.hasPlugin(pluginClass, classLoader, false);
 	}
 

@@ -33,9 +33,9 @@ import org.hotswap.agent.watch.Watcher;
  */
 @Plugin(name = "Weld",
         description = "Weld framework(http://weld.cdi-spec.org/). Reload, reinject bean, redefine proxy class after bean class definition/redefinition.",
-        testedVersions = {"2.2.6"},
-        expectedVersions = {"All between 2.0 - 2.2"},
-        supportClass = {BeanDeploymentArchiveTransformer.class, ProxyFactoryTransformer.class})
+        testedVersions = {"2.3.2"},
+        expectedVersions = {"2.3.2"},
+        supportClass = {BeanDeploymentArchiveTransformer.class, ProxyFactoryTransformer.class, AbstractClassBeanTransformer.class})
 public class WeldPlugin {
 
     private static AgentLogger LOGGER = AgentLogger.getLogger(WeldPlugin.class);
@@ -65,7 +65,7 @@ public class WeldPlugin {
     boolean initialized = false;
 
     private Map<Object, Object> registeredProxiedBeans = new WeakHashMap<Object, Object>();
-
+   
     public void init() {
         if (!initialized) {
             LOGGER.info("CDI/Weld plugin initialized.");
@@ -78,10 +78,12 @@ public class WeldPlugin {
             LOGGER.info("CDI/Weld plugin initialized in JBossAS.");
             inJbossAS = true;
             initialized = true;
+        }else {
+        	 LOGGER.info("CDI/Weld plugin already initialized in {}", appClassLoader);
         }
     }
 
-    /**
+	/**
      * Register BeanDeploymentArchive by bdaId to watcher. In case of new class the class file is not known
      * to JVM hence no hotswap is called and therefore it must be handled by watcher.
      *
@@ -94,7 +96,7 @@ public class WeldPlugin {
         try {
             resource = resourceNameToURL(archivePath);
             URI uri = resource.toURI();
-            if (!IOUtils.isFileURL(uri.toURL())) {
+            if (!IOUtils.isDirectoryURL(uri.toURL())) {
                 LOGGER.debug("Weld - unable to watch files on URL '{}' for changes (JAR file?)", archivePath);
                 return;
             } else {
@@ -137,8 +139,9 @@ public class WeldPlugin {
             return new URL(resource);
         } catch (MalformedURLException e) {
             // try to locate a file
-            if (resource.startsWith("./"))
+            if (resource.startsWith("./")) {
                 resource = resource.substring(2);
+            }
             File file = new File(resource).getCanonicalFile();
             return file.toURI().toURL();
         }
@@ -159,7 +162,7 @@ public class WeldPlugin {
         synchronized(registeredProxiedBeans) {
             registeredProxiedBeans.put(bean, proxyFactory);
         }
-        LOGGER.info("Registering ProxyFactory : " + proxyFactory.getClass().getName());
+        LOGGER.debug("Registering ProxyFactory : " + proxyFactory.getClass().getName());
     }
 
     /**
@@ -170,10 +173,10 @@ public class WeldPlugin {
      * @param original
      */
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {
+    public void classReload(ClassLoader classLoader, CtClass ctClass, Class<?> original) {   	
         if (!isSyntheticCdiClass(ctClass.getName()) && original != null) {
             try {
-                String archivePath = getArchivePath(classLoader, original.getName());
+                String archivePath = getArchivePath(classLoader, ctClass, original.getName());
                 LOGGER.info("Class {} redefined for archive {} ", original.getName(), archivePath);
                 if (isBdaRegistered(classLoader, archivePath)) {
                     String oldSignature = ProxyClassSignatureHelper.getJavaClassSignature(original);
@@ -186,20 +189,18 @@ public class WeldPlugin {
         }
     }
 
-    private String getArchivePath(ClassLoader classLoader, String className) throws NotFoundException {
+    private String getArchivePath(ClassLoader classLoader, CtClass ctClass, String knownClassName) throws NotFoundException {
          try {
-             return (String) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "getArchiveByClassName", new Class[] {String.class}, className);
+             return (String) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "getArchiveByClassName", new Class[] {String.class}, knownClassName);
          } catch (ClassNotFoundException e) {
              LOGGER.error("getArchivePath() exception {}.", e.getMessage());
          }
-         return null;
-//         
-//    	getArchiveByClassName()
-//        String classFilePath = ctClass.getURL().getPath();
-//        String className = ctClass.getName().replace(".", "/");
-//        // archive path ends with '/' therefore we set end position before the '/' (-1)
-//        String archivePath = classFilePath.substring(0, classFilePath.indexOf(className) - 1);
-//        return (new File(archivePath)).toPath().toString();
+         
+        String classFilePath = ctClass.getURL().getPath();
+        String className = ctClass.getName().replace(".", "/");
+        // archive path ends with '/' therefore we set end position before the '/' (-1)
+        String archivePath = classFilePath.substring(0, classFilePath.indexOf(className) - 1);
+        return (new File(archivePath)).toPath().toString();
     }
 
     // Return true if class is CDI synthetic class.

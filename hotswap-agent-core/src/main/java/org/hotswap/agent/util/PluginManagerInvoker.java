@@ -38,6 +38,14 @@ public class PluginManagerInvoker {
 				+ pluginClass.getName() + "\", " + classLoaderVar + ");";
 	}
 
+	public static String buildIsPluginInitialized(Class<?> pluginClass, String classLoaderVar) {
+		return "org.hotswap.agent.config.PluginManager.getInstance().isPluginInitialized(\"" + pluginClass.getName() 
+		+ "\", "+ classLoaderVar + ")";
+	}
+	
+	public static String buildIsNotPluginInitialized(Class<?> pluginClass, String classLoaderVar) {
+		return "(! " + buildIsPluginInitialized(pluginClass, classLoaderVar) +")";
+	}
 	/**
 	 * Free all classloader references and close any associated plugin instance.
 	 * Typical use is after webapp undeploy.

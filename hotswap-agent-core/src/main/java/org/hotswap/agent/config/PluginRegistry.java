@@ -158,7 +158,7 @@ public class PluginRegistry {
 		// ensure classloader initialized
 		pluginManager.initClassLoader(appClassLoader);
 
-		Class<Object> clazz = getPluginClass(pluginClass);
+		Class<?> clazz = getPluginClass(pluginClass);
 
 		// skip if the plugin is disabled
 		if (pluginManager.getPluginConfiguration(appClassLoader).isDisabledPlugin(clazz)) {
@@ -273,11 +273,10 @@ public class PluginRegistry {
 	// resolve class in this classloader - plugin class should be always only in
 	// the same classloader
 	// as the plugin manager.
-	@SuppressWarnings("unchecked")
-	protected Class<Object> getPluginClass(String pluginClass) {
+	protected Class<?> getPluginClass(String pluginClass) {
 		try {
 			// noinspection unchecked
-			return (Class<Object>) getClass().getClassLoader().loadClass(pluginClass);
+			return (Class<?>) getClass().getClassLoader().loadClass(pluginClass);
 		} catch (ClassNotFoundException e) {
 			throw new IllegalArgumentException("Plugin class not found " + pluginClass, e);
 		}
@@ -301,7 +300,7 @@ public class PluginRegistry {
 	 *            plugin class
 	 * @return new instance or null if instantiation fail.
 	 */
-	protected Object instantiate(Class<Object> plugin) {
+	protected Object instantiate(Class<?> plugin) {
 		try {
 			return plugin.newInstance();
 		} catch (InstantiationException e) {

@@ -1,6 +1,7 @@
 package org.hotswap.agent.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -122,6 +123,23 @@ public class IOUtils {
 		return URL_PROTOCOL_FILE.equals(protocol) || protocol.startsWith(URL_PROTOCOL_VFS);
 	}
 
+	/**
+	 * Determine whether the given URL points to a directory in the file system
+	 * 
+	 * @param url
+	 *            the URL to check
+	 * @return whether the URL has been identified as a file system URL
+	 */
+	public static boolean isDirectoryURL(URL url) {
+		try {
+			File f = new File(url.toURI());
+			if(f.exists() && f.isDirectory()) {
+				return true;
+			}
+		} catch (Exception e) {
+		}
+		return false;
+	}
 	/**
 	 * Return fully qualified class name of class file on a URI.
 	 *

@@ -43,8 +43,8 @@ public class BdaAgentRegistry {
      */
     public static String getArchiveByClassName(String className){
     	for(BeanDeploymentArchiveAgent agent: INSTANCES.values()) {
-    		if(agent.deploymentArchive.getBeanClasses().contains(className)) {
-    			return agent.archivePath;
+    		if(agent.getDeploymentArchive().getBeanClasses().contains(className)) {
+    			return agent.getArchivePath();
     		}
     	}
     	return null;

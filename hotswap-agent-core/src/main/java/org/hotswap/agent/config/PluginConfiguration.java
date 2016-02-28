@@ -29,23 +29,33 @@ public class PluginConfiguration {
 
 	private static final String PLUGIN_CONFIGURATION = "hotswap-agent.properties";
 
-	// if the property is not defined in this classloader, look for parent
-	// classloader and it's configuration
-
 	// this configuration adheres to this classloader
 	private final ClassLoader classLoader;
 
 	private final MergedProperties merged;
 
-	private final int me;
+	private final int ID;
 
 	public PluginConfiguration(ClassLoader classLoader) {
-		this.me = cnt.incrementAndGet();
+		this.ID = cnt.incrementAndGet();
 
 		this.classLoader = classLoader;
+		URL configurationURL = null;
+		
+        try {
+            String externalPropertiesFile = HotswapAgent.getExternalPropertiesFile();
 
-		URL configurationURL = findResource(classLoader, PLUGIN_CONFIGURATION);
-
+            if (externalPropertiesFile != null) {
+                configurationURL = MergedProperties.resourceNameToURL(externalPropertiesFile);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while loading external properties file " + configurationURL, e);
+        }
+        
+        if(configurationURL == null) {
+        	configurationURL = findResource(classLoader, PLUGIN_CONFIGURATION);
+        }
+        
 		merged = new MergedProperties(configurationURL);
 		bootStrap(classLoader);
 		init();
@@ -58,7 +68,7 @@ public class PluginConfiguration {
 	private static final AtomicInteger cnt = new AtomicInteger();
 
 	public PluginConfiguration(PluginConfiguration parent, ClassLoader classLoader) {
-		this.me = cnt.incrementAndGet();
+		this.ID = cnt.incrementAndGet();
 		this.classLoader = classLoader;
 
 		URL configurationURL = null;
@@ -105,7 +115,7 @@ public class PluginConfiguration {
 
 		while (turls.hasMoreElements()) {
 			URL url = turls.nextElement();
-			LOGGER.info("Nested Configuration (" + me + ") URL:" + url.getPath());
+			LOGGER.info("Nested Configuration (" + ID + ") URL:" + url.getPath());
 			merged.put(url);
 		}
 		String[] overlays = merged.getAllPropertiesAsArray("overlays");
@@ -115,7 +125,7 @@ public class PluginConfiguration {
 					Enumeration<URL> ohs = findResources(classLoader, overlay.trim());
 					while (ohs.hasMoreElements()) {
 						URL url = ohs.nextElement();
-						LOGGER.info("Overlay Configuration (" + me + ") URL:" + url.getPath());
+						LOGGER.info("Overlay Configuration (" + ID + ") URL:" + url.getPath());
 						merged.put(url);
 					}
 				}
@@ -314,7 +324,7 @@ public class PluginConfiguration {
 
 	@Override
 	public String toString() {
-		return "PluginConfiguration [me=" + me + ", getExtraClasspath()=" + Arrays.toString(getExtraClasspath())
+		return "PluginConfiguration [ID=" + ID + ", getExtraClasspath()=" + Arrays.toString(getExtraClasspath())
 				+ ", getWatchResources()=" + Arrays.toString(getWatchResources()) + ", getDisabledPlugins()="
 				+ getDisabledPlugins() + ", containsPropertyFile()=" + containsPropertyFile() + "]";
 	}

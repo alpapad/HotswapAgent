@@ -260,7 +260,7 @@ public class MergedProperties {
 		return ret.toArray(new URL[ret.size()]);
 	}
 
-	private static URL resourceNameToURL(String resource) throws Exception {
+	public static URL resourceNameToURL(String resource) throws Exception {
 		try {
 			// Try to format as a URL?
 			return new URL(resource);

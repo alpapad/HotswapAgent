@@ -25,6 +25,7 @@ import org.jboss.weld.annotated.enhanced.jlr.EnhancedAnnotatedTypeImpl;
 import org.jboss.weld.annotated.slim.SlimAnnotatedType;
 import org.jboss.weld.annotated.slim.backed.BackedAnnotatedType;
 import org.jboss.weld.bean.ManagedBean;
+import org.jboss.weld.bean.SessionBean;
 import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.builtin.BeanManagerProxy;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
@@ -52,12 +53,13 @@ public class BeanDeploymentArchiveAgent {
      */
     public static boolean reloadFlag = false;
 
-    BeanDeploymentArchive deploymentArchive;
+    private BeanDeploymentArchive deploymentArchive;
 
-    String archivePath;
+    private String archivePath;
 
-    boolean registered = false;
+    private boolean registered = false;
 
+    //private org.jboss.weld.bootstrap.BeanDeployer deployer;
     /**
      * Register bean archive with appropriate bean archive path.
      *
@@ -89,6 +91,7 @@ public class BeanDeploymentArchiveAgent {
 
     }
 
+    
     /**
      * Gets the collection of registered BeanDeploymentArchive(s)
      *
@@ -121,7 +124,11 @@ public class BeanDeploymentArchiveAgent {
         return archivePath;
     }
 
-    private void register() {
+    public BeanDeploymentArchive getDeploymentArchive() {
+		return deploymentArchive;
+	}
+
+	private void register() {
         if (!registered) {
             registered = true;
             PluginManagerInvoker.callPluginMethod(WeldPlugin.class, getClass().getClassLoader(),
@@ -138,8 +145,7 @@ public class BeanDeploymentArchiveAgent {
      * @param beanClassName
      * @throws IOException error working with classDefinition
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static void refreshBeanClass(ClassLoader classLoader, String archivePath, Map registeredProxiedBeans,
+    public static void refreshBeanClass(ClassLoader classLoader, String archivePath, Map<Object, Object> registeredProxiedBeans,
             String beanClassName, String oldClassSignature) throws IOException {
 
         BeanDeploymentArchiveAgent bdaAgent = BdaAgentRegistry.get(archivePath);
@@ -188,11 +194,13 @@ public class BeanDeploymentArchiveAgent {
                     for (Bean<?> bean : beans) {
                         if (bean instanceof ManagedBean) {
                             reloadManagedBean(beanManager, beanClass, (ManagedBean) bean);
+                        } if(bean instanceof SessionBean) {
+                        	reloadSessionBean(beanManager, beanClass, (SessionBean) bean);
                         } else {
                            LOGGER.warning("reloadBean() : class '{}' reloading is not implemented.", bean.getClass().getName());
                         }
                     }
-                    LOGGER.debug("Bean reloaded '{}'", beanClass.getName());
+                    LOGGER.info("Bean reloaded '{}'", beanClass.getName());
                 } else {
                     try {
                         ClassTransformer classTransformer = getClassTransformer();
@@ -202,11 +210,11 @@ public class BeanDeploymentArchiveAgent {
                         if (managedBeanOrDecorator) {
                             EnhancedAnnotatedType eat = EnhancedAnnotatedTypeImpl.of(annotatedType, classTransformer);
                             defineManagedBean(beanManager, eat);
-                            // define managed bean
-    //                        beanManager.cleanupAfterBoot();
-                            LOGGER.debug("Bean defined '{}'", beanClass.getName());
+                            // define managed bean beanManager.cleanupAfterBoot();
+                            LOGGER.info("Bean defined '{}'", beanClass.getName());
                         } else {
                             // TODO : define session bean
+                        	LOGGER.info("Bean NOT? defined '{}', session bean?", beanClass.getName());
                         }
                     } catch (Exception e) {
                         LOGGER.debug("Bean definition failed", e);
@@ -234,9 +242,20 @@ public class BeanDeploymentArchiveAgent {
             }
         } catch (org.jboss.weld.context.ContextNotActiveException e) {
             LOGGER.warning("No active contexts for {}",e, beanClass.getName());
+        }catch (Exception e) {
+            LOGGER.warning("Context for {} failed to reload",e, beanClass.getName());
         }
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void reloadSessionBean(BeanManagerImpl beanManager, Class<?> beanClass, SessionBean managedBean) {
+        ClassTransformer classTransformer = getClassTransformer();
+        SlimAnnotatedType annotatedType = getAnnotatedType(getBdaId(), classTransformer, beanClass);
+        EnhancedAnnotatedType eat = EnhancedAnnotatedTypeImpl.of(annotatedType, classTransformer);
+
+        managedBean.setProducer(beanManager.getLocalInjectionTargetFactory(eat).createInjectionTarget(eat, managedBean, false));
+    }    
+    
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void defineManagedBean(BeanManagerImpl beanManager, EnhancedAnnotatedType eat) throws Exception {
         BeanAttributes attributes = BeanAttributesFactory.forBean(eat, beanManager);
@@ -296,7 +315,7 @@ public class BeanDeploymentArchiveAgent {
 	                        proxyFactoryClass = classLoader.loadClass("org.jboss.weld.bean.proxy.ProxyFactory");
 	                    }
 	                    Object proxyFactory = entry.getValue();
-	                    LOGGER.debug("Recreate proxyClass {} for bean class {}.", proxyClass.getName(), bean.getClass());
+	                    LOGGER.info("Recreate proxyClass {} for bean class {}.", proxyClass.getName(), bean.getClass());
 	                    ReflectionHelper.invoke(proxyFactory, proxyFactoryClass, "getProxyClass", new Class[] {});
 	                }
                 }
