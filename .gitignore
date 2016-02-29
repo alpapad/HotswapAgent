@@ -6,3 +6,4 @@
 #IntelliJ
 *.idea
 *.iml
+/bin/

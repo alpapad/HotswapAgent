@@ -194,10 +194,10 @@ public class BeanDeploymentArchiveAgent {
                     for (Bean<?> bean : beans) {
                         if (bean instanceof ManagedBean) {
                             reloadManagedBean(beanManager, beanClass, (ManagedBean) bean);
-                        } if(bean instanceof SessionBean) {
+                        } else if(bean instanceof SessionBean) {
                         	reloadSessionBean(beanManager, beanClass, (SessionBean) bean);
                         } else {
-                           LOGGER.warning("reloadBean() : class '{}' reloading is not implemented.", bean.getClass().getName());
+                           LOGGER.warning("reloadBean() : class '{}' reloading is not implemented ({}).", bean.getClass().getName() , bean.getBeanClass());
                         }
                     }
                     LOGGER.debug("Bean reloaded '{}'", beanClass.getName());
@@ -242,7 +242,7 @@ public class BeanDeploymentArchiveAgent {
             }
         } catch (org.jboss.weld.context.ContextNotActiveException e) {
             LOGGER.warning("No active contexts for {}",e, beanClass.getName());
-        }catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.warning("Context for {} failed to reload",e, beanClass.getName());
         }
     }
