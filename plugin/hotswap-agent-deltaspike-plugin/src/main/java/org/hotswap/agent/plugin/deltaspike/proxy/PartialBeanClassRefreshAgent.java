@@ -1,4 +1,4 @@
-package org.hotswap.agent.plugin.deltaspike;
+package org.hotswap.agent.plugin.deltaspike.proxy;
 
 import java.lang.reflect.InvocationHandler;
 
@@ -19,9 +19,8 @@ public class PartialBeanClassRefreshAgent {
             Thread.currentThread().setContextClassLoader(classLoader);
             Object lifecycle = (Object) ReflectionHelper.get(partialBean, "lifecycle");
             if (lifecycle != null) {
-                @SuppressWarnings("unchecked")
-				Class<? extends InvocationHandler> delegateInvocationHandlerClass = (Class<? extends InvocationHandler>) ReflectionHelper.get(lifecycle, "delegateInvocationHandlerClass");
-                Class<?> targetClass = (Class<?>) ReflectionHelper.get(lifecycle, "targetClass");
+                Class<? extends InvocationHandler> delegateInvocationHandlerClass = (Class) ReflectionHelper.get(lifecycle, "delegateInvocationHandlerClass");
+                Class<?> targetClass = (Class) ReflectionHelper.get(lifecycle, "targetClass");
                 PartialBeanProxyFactory proxyFactory = PartialBeanProxyFactory.getInstance();
                 proxyFactory.getProxyClass(BeanManagerProvider.getInstance().getBeanManager(), targetClass, delegateInvocationHandlerClass);
             }
