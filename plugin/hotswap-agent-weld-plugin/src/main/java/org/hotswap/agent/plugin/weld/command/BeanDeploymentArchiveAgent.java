@@ -233,7 +233,7 @@ public class BeanDeploymentArchiveAgent {
         EnhancedAnnotatedType eat = EnhancedAnnotatedTypeImpl.of(annotatedType, classTransformer);
 
         managedBean.setProducer(beanManager.getLocalInjectionTargetFactory(eat).createInjectionTarget(eat, managedBean, false));
-
+        
         try {
             Object get = beanManager.getContext(managedBean.getScope()).get(managedBean);
             if (get != null) {
