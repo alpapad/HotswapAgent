@@ -1,8 +1,12 @@
 package org.hotswap.agent.plugin.wildfly.el;
 
+import java.net.URL;
+
+import org.hotswap.agent.annotation.FileEvent;
 import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.LoadEvent;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
+import org.hotswap.agent.annotation.OnResourceFileEvent;
 import org.hotswap.agent.annotation.Plugin;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
@@ -108,7 +112,13 @@ public class WildFlyELResolverPlugin {
     	PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader, original.getName());
         scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
     }
-
+    
+	@OnResourceFileEvent(path = "/", filter = ".*\\.properties")
+	public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
+		PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader, fileUrl.getFile());
+        scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
+	}
+	
 	@Init
 	public void initializeInstance(PluginConfiguration pluginConfiguration) {
 		LOGGER.info("WildFlyELResolverPlugin Initializing");

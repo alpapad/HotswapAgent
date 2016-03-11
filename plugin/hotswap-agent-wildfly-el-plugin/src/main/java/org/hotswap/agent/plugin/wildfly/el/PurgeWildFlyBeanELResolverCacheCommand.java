@@ -3,6 +3,7 @@ package org.hotswap.agent.plugin.wildfly.el;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import org.hotswap.agent.command.MergeableCommand;
 import org.hotswap.agent.logging.AgentLogger;
@@ -34,18 +35,22 @@ public class PurgeWildFlyBeanELResolverCacheCommand extends MergeableCommand {
 
 				try {
 					Thread.currentThread().setContextClassLoader(appClassLoader);
-					Method beanElResolverMethod = appClassLoader.loadClass("org.jboss.el.cache.BeanPropertiesCache").getDeclaredMethod("getProperties", new Class<?>[] {});
-					Object o = beanElResolverMethod.invoke(null);
-
-					@SuppressWarnings("unchecked")
-					Map<Class<?>, Object> m = Map.class.cast(o);
-
-					Iterator<Map.Entry<Class<?>, Object>> it = m.entrySet().iterator();
-					while (it.hasNext()) {
-						Map.Entry<Class<?>, Object> entry = it.next();
-						if(entry.getKey().getClassLoader() == appClassLoader) {
-							if (entry.getKey().getName().equals(className) || (entry.getKey().getName()).equals(className + "$Proxy$_$$_WeldSubclass")) {
-								it.remove();
+					if(className.endsWith(".properties")) {
+						ResourceBundle.clearCache(appClassLoader);
+					} else {
+						Method beanElResolverMethod = appClassLoader.loadClass("org.jboss.el.cache.BeanPropertiesCache").getDeclaredMethod("getProperties", new Class<?>[] {});
+						Object o = beanElResolverMethod.invoke(null);
+	
+						@SuppressWarnings("unchecked")
+						Map<Class<?>, Object> m = Map.class.cast(o);
+	
+						Iterator<Map.Entry<Class<?>, Object>> it = m.entrySet().iterator();
+						while (it.hasNext()) {
+							Map.Entry<Class<?>, Object> entry = it.next();
+							if(entry.getKey().getClassLoader() == appClassLoader) {
+								if (entry.getKey().getName().equals(className) || (entry.getKey().getName()).equals(className + "$Proxy$_$$_WeldSubclass")) {
+									it.remove();
+								}
 							}
 						}
 					}
