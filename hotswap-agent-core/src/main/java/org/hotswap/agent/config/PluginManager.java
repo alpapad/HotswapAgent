@@ -240,6 +240,9 @@ public class PluginManager {
 		pluginRegistry.closeClassLoader(classLoader);
 		classLoaderConfigurations.remove(classLoader);
 		hotswapTransformer.closeClassLoader(classLoader);
+		if(watcher != null) {
+			watcher.closeClassLoader(classLoader);
+		}
 	}
 
 	public PluginConfiguration getPluginConfiguration(ClassLoader classLoader) {

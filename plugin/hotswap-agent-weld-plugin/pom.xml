@@ -32,6 +32,11 @@
 			<version>${org.jboss.weld.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.wildfly</groupId>
+			<artifactId>wildfly-weld</artifactId>
+			<version>10.1.0.Final-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 		</dependency>

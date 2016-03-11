@@ -44,6 +44,13 @@ public class UndertowJsfPlugin {
 		}
 	}
 	
+	@OnClassLoadEvent(classNameRegexp = "org.wildfly.extension.undertow.deployment.UndertowDeploymentService")
+	public static void patchUndertowDeploymentService(ClassPool classPool, CtClass ctClass) throws CannotCompileException, NotFoundException {
+		ctClass.getDeclaredMethod("stopContext").insertBefore("{\n"
+				+" io.undertow.servlet.api.DeploymentInfo ddinfo = (io.undertow.servlet.api.DeploymentInfo) deploymentInfoInjectedValue.getValue();\n"
+				+ "org.hotswap.agent.config.PluginManager.getInstance().closeClassLoader(ddinfo.getClassLoader());}");
+	}
+	
 	@Init
 	public void initializeInstance(PluginConfiguration pluginConfiguration) {
 		LOGGER.info("UndertowJsf  plugin Initializing");

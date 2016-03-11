@@ -8,8 +8,11 @@ import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
 import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.javassist.CannotCompileException;
+import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.CtConstructor;
+import org.hotswap.agent.javassist.CtMethod;
+import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
@@ -32,26 +35,77 @@ public class WildFlyELResolverPlugin {
     @Init
     Scheduler scheduler;
 
+    @Init
+    ClassLoader appClassLoader;
+    
     /**
      * Hook on BeanELResolver class and for each instance:
      * - ensure plugin is initialized
      * - register instances using registerBeanELResolver() method
+     * @throws NotFoundException 
      */
     @OnClassLoadEvent(classNameRegexp = "javax.el.BeanELResolver")
-    public static void beanELResolverRegisterVariable(CtClass ctClass) throws CannotCompileException {
+    public static void beanELResolverRegisterVariable(CtClass ctClass, ClassPool classPool) throws CannotCompileException, NotFoundException {
         for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
             constructor.insertAfter(
            		"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" +
            		 PluginManagerInvoker.buildInitializePlugin(WildFlyELResolverPlugin.class,"$$cl")
        		);
         }
+        
         LOGGER.info("Patched JbossELResolver");
     }
 
+    /**
+     * Hook on BeanELResolver class and for each instance:
+     * - ensure plugin is initialized
+     * - register instances using registerBeanELResolver() method
+     * @throws NotFoundException 
+     */
+    @OnClassLoadEvent(classNameRegexp = "org.jboss.el.cache.BeanPropertiesCache")
+    public static void beanPropertiesCache(CtClass ctClass, ClassPool classPool) throws CannotCompileException, NotFoundException {
+        for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+            constructor.insertAfter(
+           		"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" +
+           		 PluginManagerInvoker.buildInitializePlugin(WildFlyELResolverPlugin.class,"$$cl")
+       		);
+        }
+        LOGGER.info("Patched org.jboss.el.cache.BeanPropertiesCache");
+    }
+    
+    /**
+     * Hook on org.jboss.el.cache.BeanPropertiesCache.SoftConcurrentHashMap class and for each instance:
+     * - ensure plugin is initialized
+     * - register instances using registerBeanELResolver() method
+     * @throws NotFoundException 
+     */
+    @OnClassLoadEvent(classNameRegexp = "org.jboss.el.cache.BeanPropertiesCache.SoftConcurrentHashMap")
+    public static void beanPropertiesCache$(CtClass ctClass, ClassPool classPool) throws CannotCompileException, NotFoundException {
+        ctClass.addMethod(CtMethod.make("public java.util.Set entrySet() { return map.entrySet();}", ctClass));
+        LOGGER.info("Patched org.jboss.el.cache.BeanPropertiesCache$SoftConcurrentHashMap");
+    }
+    //
+    /**
+     * Hook on BeanELResolver class and for each instance:
+     * - ensure plugin is initialized
+     * - register instances using registerBeanELResolver() method
+     * @throws NotFoundException 
+     */
+    @OnClassLoadEvent(classNameRegexp = "org.jboss.el.cache.FactoryFinderCache")
+    public static void factoryFinderCache(CtClass ctClass, ClassPool classPool) throws CannotCompileException, NotFoundException {
+        for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+            constructor.insertAfter(
+           		"java.lang.ClassLoader $$cl = Thread.currentThread().getContextClassLoader();" +
+           		 PluginManagerInvoker.buildInitializePlugin(WildFlyELResolverPlugin.class,"$$cl")
+       		);
+        }       
+        LOGGER.info("Patched org.jboss.el.cache.FactoryFinderCache");
+    }
+    
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void invalidateClassCache(ClassLoader appClassLoader) throws Exception {
+    public void invalidateClassCache(Class<?> original) throws Exception {
     	LOGGER.trace("Running invalidateClassCache {}", appClassLoader);
-    	PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader);
+    	PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader, original.getName());
         scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
     }
 
