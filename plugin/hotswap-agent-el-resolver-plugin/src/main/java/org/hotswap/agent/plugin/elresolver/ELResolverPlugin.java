@@ -19,6 +19,7 @@ import org.hotswap.agent.javassist.CtNewMethod;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
+import org.hotswap.agent.util.ReflectionHelper;
 
 /**
  * Clear javax.el.BeanELResolver cache after any class redefinition.
@@ -40,6 +41,12 @@ public class ELResolverPlugin {
 
     Set<Object> registeredBeanELResolvers = Collections.newSetFromMap(new WeakHashMap<Object, Boolean>());
 
+    boolean jbossReflectionUtil = false;
+
+    public void registerJBossReflectionUtil() {
+        jbossReflectionUtil = true;
+    }
+
     /**
      * Hook on BeanELResolver class and for each instance:
      * - ensure plugin is initialized
@@ -48,39 +55,58 @@ public class ELResolverPlugin {
     @OnClassLoadEvent(classNameRegexp = "javax.el.BeanELResolver")
     public static void beanELResolverRegisterVariable(CtClass ctClass) throws CannotCompileException {
 
+        String initPlugin = PluginManagerInvoker.buildInitializePlugin(ELResolverPlugin.class);
+        String registerThis = PluginManagerInvoker.buildCallPluginMethod(ELResolverPlugin.class, "registerBeanELResolver",
+                "this", "java.lang.Object");
+
+        for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
+            constructor.insertAfter(initPlugin);
+            constructor.insertAfter(registerThis);
+        }
+
         boolean found = false;
         if (checkJuelEL(ctClass)) {
             found = true;
-            LOGGER.error("JuelEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.debug("JuelEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         } else if (checkApacheEL(ctClass)) {
             found = true;
-            LOGGER.error("ApacheEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.debug("ApacheEL - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         } else if (checkJBoss_3_0_EL(ctClass)) {
             found = true;
-            LOGGER.error("JBossEL 3.0 - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
+            LOGGER.debug("JBossEL 3.0 - javax.el.BeanELResolver - method added " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader). ");
         }
 
         if (!found) {
             LOGGER.warning("Unable to add javax.el.BeanELResolver." + PURGE_CLASS_CACHE_METHOD_NAME + "() method. Purging will not be available.");
-        } else {
-            String initPlugin = PluginManagerInvoker.buildInitializePlugin(ELResolverPlugin.class);
-            String registerThis = PluginManagerInvoker.buildCallPluginMethod(ELResolverPlugin.class, "registerBeanELResolver",
-                    "this", "java.lang.Object");
-
-            for (CtConstructor constructor : ctClass.getDeclaredConstructors()) {
-                constructor.insertAfter(initPlugin);
-                constructor.insertAfter(registerThis);
-            }
         }
     }
 
+    @OnClassLoadEvent(classNameRegexp = "org.jboss.el.util.ReflectionUtil")
+    public static void patchJBossReflectionUtil(CtClass ctClass) throws NotFoundException, CannotCompileException {
+        CtField ctField = new CtField(CtClass.booleanType, "__haInitialized", ctClass);
+        ctField.setModifiers(org.hotswap.agent.javassist.Modifier.PRIVATE | org.hotswap.agent.javassist.Modifier.STATIC);
+        ctClass.addField(ctField, CtField.Initializer.constant(false));
 
-    private static boolean checkJuelEL(CtClass ctClass)
-    {
+        String buildInitializePlugin = PluginManagerInvoker.buildInitializePlugin(ELResolverPlugin.class, "base.getClass().getClassLoader()");
+        String registerJBossReflectionUtil = PluginManagerInvoker.buildCallPluginMethod("base.getClass().getClassLoader()", ELResolverPlugin.class, "registerJBossReflectionUtil");
+
+        StringBuilder src = new StringBuilder("{");
+        src.append("    if(!__haInitialized) {");
+        src.append("        __haInitialized=true;");
+        src.append("        " + buildInitializePlugin);
+        src.append("        " + registerJBossReflectionUtil);
+        src.append("    }");
+        src.append("}");
+        CtMethod mFindMethod = ctClass.getDeclaredMethod("findMethod");
+        mFindMethod.insertAfter(src.toString());
+        LOGGER.debug("org.jboss.el.util.ReflectionUtil enhanced with resource bundles registration.");
+    }
+
+    private static boolean checkJuelEL(CtClass ctClass) {
         try {
             // JUEL, (JSF BeanELResolver[s])
             // check if we have purgeBeanClasses method
-            ctClass.getDeclaredMethod("purgeBeanClasses");
+            CtMethod purgeMeth = ctClass.getDeclaredMethod("purgeBeanClasses");
             ctClass.addMethod(CtNewMethod.make("public void " + PURGE_CLASS_CACHE_METHOD_NAME + "(java.lang.ClassLoader classLoader) {" +
                     "   purgeBeanClasses(classLoader); " +
                     "}", ctClass));
@@ -95,7 +121,7 @@ public class ELResolverPlugin {
     private static boolean checkApacheEL(CtClass ctClass)
     {
         try {
-            ctClass.getField("cache");
+            CtField field = ctClass.getField("cache");
             // Apache BeanELResolver (has cache property)
             ctClass.addField(new CtField(CtClass.booleanType, "__purgeRequested", ctClass), CtField.Initializer.constant(false));
 
@@ -129,7 +155,6 @@ public class ELResolverPlugin {
             // do nothing
         }
         return false;
-
     }
 
     /*
@@ -178,9 +203,22 @@ public class ELResolverPlugin {
     }
 
     @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-    public void invalidateClassCache(ClassLoader appClassLoader) throws Exception {
+    public void invalidateClassCache(ClassLoader appClassLoader, CtClass ctClass) throws Exception {
+        if (jbossReflectionUtil) {
+            flushJbossReflectionUtil(appClassLoader);
+        }
         PurgeBeanELResolverCacheCommand cmd = new PurgeBeanELResolverCacheCommand(appClassLoader, registeredBeanELResolvers);
         scheduler.scheduleCommand(cmd);
     }
 
+    private void flushJbossReflectionUtil(ClassLoader classLoader) {
+        try {
+            LOGGER.debug("Flushing JbossReflectionUtil");
+            Class<?> reflectionUtilClass = classLoader.loadClass("org.jboss.el.util.ReflectionUtil");
+            Object cache = ReflectionHelper.get(null, reflectionUtilClass, "methodCache");
+            ReflectionHelper.invoke(cache, cache.getClass(), "clear", null);
+        } catch (Exception e) {
+            LOGGER.error("flushJbossReflectionUtilCache() exception {}.", e.getMessage());
+        }
+    }
 }
