@@ -2,15 +2,19 @@ package org.hotswap.agent.plugin.weld.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.enterprise.context.spi.AlterableContext;
+import javax.enterprise.context.spi.Context;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanAttributes;
 import javax.enterprise.inject.spi.CDI;
@@ -30,6 +34,7 @@ import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.builtin.BeanManagerProxy;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BeansXml;
+import org.jboss.weld.context.AbstractConversationContext;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.resources.ClassTransformer;
@@ -37,6 +42,7 @@ import org.jboss.weld.resources.ReflectionCache;
 import org.jboss.weld.resources.ReflectionCacheFactory;
 import org.jboss.weld.resources.SharedObjectCache;
 import org.jboss.weld.util.Beans;
+import org.jboss.weld.util.ForwardingContext;
 
 /**
  * Handles creating/redefinition of bean classes in BeanDeploymentArchive
@@ -202,7 +208,7 @@ public class BeanDeploymentArchiveAgent {
 			// check if it is Object descendant
 			if (Object.class.isAssignableFrom(beanClass)) {
 				BeanManagerImpl beanManager = ((BeanManagerProxy) CDI.current().getBeanManager()).unwrap();
-
+				
 				Set<Bean<?>> beans = beanManager.getBeans(beanClass);
 
 				if (beans != null && !beans.isEmpty()) {
@@ -248,16 +254,52 @@ public class BeanDeploymentArchiveAgent {
 		ClassTransformer classTransformer = getClassTransformer();
 		SlimAnnotatedType annotatedType = getAnnotatedType(getBdaId(), classTransformer, beanClass);
 		EnhancedAnnotatedType eat = EnhancedAnnotatedTypeImpl.of(annotatedType, classTransformer);
-
+		
 		if (!eat.isAbstract() || !eat.getJavaClass().isInterface()) { // injectionTargetCannotBeCreatedForInterface
 			managedBean.setProducer(
 					beanManager.getLocalInjectionTargetFactory(eat).createInjectionTarget(eat, managedBean, false));
 
 			try {
-				Object get = beanManager.getContext(managedBean.getScope()).get(managedBean);
-				if (get != null) {
-					LOGGER.debug("Bean injection points are reinitialized '{}'", beanClass.getName());
-					managedBean.getProducer().inject(get, beanManager.createCreationalContext(managedBean));
+				Field contextsField = BeanManagerImpl.class.getField("contexts");
+				contextsField.setAccessible(true);
+				
+				Map<Class<? extends Annotation>, List<?>> ctxs= Map.class.cast(contextsField.get(beanManager));
+				List<?> contextxs = ctxs.get(managedBean.getScope());
+				if((contextxs != null) && (contextxs.size() > 0)) {
+					for(Object get: contextxs) {
+						if (get != null) {
+							if(get instanceof AlterableContext) {
+								
+								if(get instanceof ForwardingContext) {
+									get = ForwardingContext.unwrap(Context.class.cast(get));
+								}
+								LOGGER.debug("XXXXXXXXXXXXX '{}'", get.getClass());
+								
+								//AlterableContext.class.cast(get).destroy(managedBean);
+								Field toRedefine = AbstractConversationContext.class.getField("toRedefine");
+								
+								List.class.cast(toRedefine.get(get)).add(managedBean);
+								
+							} else {
+								try {
+									LOGGER.debug("Bean injection points are reinitialized '{}'", beanClass.getName());
+									managedBean.getProducer().inject(get, beanManager.createCreationalContext(managedBean));
+									
+								} catch(Exception e) {
+									LOGGER.debug("No active contexts for {} -> {} ???", e, managedBean.getScope(), beanClass.getName());
+								}
+							}
+						} else {
+							LOGGER.debug("No active contexts for {} --> {}",  managedBean.getScope(), beanClass.getName());
+						}
+					}
+//					Object get = beanManager.getContext(managedBean.getScope()).get(managedBean);
+//					if (get != null) {
+//						LOGGER.debug("Bean injection points are reinitialized '{}'", beanClass.getName());
+//						managedBean.getProducer().inject(get, beanManager.createCreationalContext(managedBean));
+//					}
+				} else {
+					LOGGER.debug("No active contexts for {} --> {}",  managedBean.getScope(), beanClass.getName());
 				}
 			} catch (org.jboss.weld.context.ContextNotActiveException e) {
 				LOGGER.warning("No active contexts for {}", e, beanClass.getName());

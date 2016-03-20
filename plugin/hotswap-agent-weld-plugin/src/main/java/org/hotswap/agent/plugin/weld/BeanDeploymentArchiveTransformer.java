@@ -1,10 +1,16 @@
 package org.hotswap.agent.plugin.weld;
 
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.javassist.CannotCompileException;
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.CtConstructor;
+import org.hotswap.agent.javassist.CtField;
+import org.hotswap.agent.javassist.CtMethod;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.PluginManagerInvoker;
@@ -103,4 +109,43 @@ public class BeanDeploymentArchiveTransformer {
 		LOGGER.debug("Class 'org.jboss.as.weld.deployment.BeanDeploymentArchiveImpl' patched with BDA registration.");
 	}
 
+	@OnClassLoadEvent(classNameRegexp = "org.jboss.weld.manager.BeanManagerImpl")
+	public static void transformBeanManagerImpl(CtClass clazz, ClassPool classPool) throws NotFoundException {
+		CtField f = clazz.getField("contexts");
+		f.setModifiers(Modifier.PUBLIC);
+		
+	}
+	//org.jboss.weld.context.AbstractConversationContext
+	@OnClassLoadEvent(classNameRegexp = "org.jboss.weld.context.AbstractBoundContext")
+	public static void transformAbstractConversationContext(CtClass clazz, ClassPool classPool) throws NotFoundException, CannotCompileException {
+		//    public void activate(String cid) {
+		//javax.enterprise.context.spi.Contextual
+		
+		clazz.addField(CtField.make("public java.util.List toRedefine = new java.util.ArrayList();", clazz));
+		//CtMethod activate = clazz.getDeclaredMethod("activate", new CtClass[] {classPool.get("java.lang.String")});
+		
+		//activate.insertAfter("{System.err.println(\"activate called on org.jboss.weld.context.AbstractConversationContext:\" + this);}");
+		
+		//protected void initialize(String cid) 
+//		List a = new ArrayList();
+//		a.iterator().next()
+		CtMethod initialize = clazz.getDeclaredMethod("activate");
+		StringBuilder sb = new StringBuilder("{\n");
+		sb.append("java.util.Iterator it = toRedefine.iterator();\n");
+		sb.append("while(it.hasNext()){\n");
+
+		sb.append(" javax.enterprise.context.spi.Contextual c = javax.enterprise.context.spi.Contextual.class.cast(it.next());\n");
+		sb.append(" System.err.println(\"Reloading........\" + c + \", :\" + this);\n");
+		sb.append(" try{this.destroy((javax.enterprise.context.spi.Contextual)c);} catch(java.lang.Exception e) { e.printStackTrace();}\n");		
+//		sb.append(" it.remove(); ");	
+//		sb.append("for(Object o: toRedefine) {");
+//		sb.append(" this.destroy(javax.enterprise.context.spi.Contextual.class.cast(o)); ");
+		sb.append("}\n");
+		//sb.append("toRedefine.clear(); ");
+		sb.append("{System.err.println(\"initialize called on org.jboss.weld.context.AbstractBoundContext:\" + this);}\n");
+		sb.append(" }\n");
+		initialize.insertAfter(sb.toString());
+		
+		LOGGER.debug("Class 'org.jboss.weld.context.AbstractBoundContext' patched with BDA registration.");
+	}
 }
