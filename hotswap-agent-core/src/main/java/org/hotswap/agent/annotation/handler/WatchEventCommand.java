@@ -36,12 +36,17 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 	private final WatchEventDTO watchEventDTO;
 	private final WatchFileEvent event;
 	private final ClassLoader classLoader;
+	private final List<FileEvent> events;
+	private final boolean hasFilter;
 	
 	public WatchEventCommand(PluginAnnotation<T> pluginAnnotation, WatchFileEvent event, ClassLoader classLoader) {
 		this.pluginAnnotation = pluginAnnotation;
 		this.watchEventDTO = WatchEventDTO.parse(pluginAnnotation.getAnnotation());
 		this.event = event;
 		this.classLoader = classLoader;
+		this.events = Arrays.asList(watchEventDTO.getEvents());
+		this.hasFilter = (watchEventDTO.getFilter() != null && watchEventDTO.getFilter().length() > 0);
+		
 	}
 
 	@Override
@@ -94,6 +99,8 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 	public void onWatchEvent(PluginAnnotation<T> pluginAnnotation, WatchFileEvent event, ClassLoader classLoader) {
 		Object plugin = pluginAnnotation.getPlugin();
 
+		LOGGER.debug("onWatchEvent URI {} {}", event.getURI(), event.getEventType());
+		
 		// regular files filter
 		if (watchEventDTO.isOnlyRegularFiles() && !event.isFile()) {
 			LOGGER.debug("Skipping URI {} because it is not a regular file.", event.getURI());
@@ -101,16 +108,15 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 		}
 
 		// watch type filter
-		if (!Arrays.asList(watchEventDTO.getEvents()).contains(event.getEventType())) {
+		if (!events.contains(event.getEventType())) {
 			LOGGER.debug("Skipping URI {} because it is not a requested event.", event.getURI());
 			return;
 		}
 
 		// resource name filter regexp
-		if (watchEventDTO.getFilter() != null && watchEventDTO.getFilter().length() > 0) {
+		if (hasFilter) {
 			if (!event.getURI().toString().matches(watchEventDTO.getFilter())) {
-				LOGGER.debug("Skipping URI {} because it does not match filter.", event.getURI(),
-						watchEventDTO.getFilter());
+				LOGGER.debug("Skipping URI {} because it does not match filter.", event.getURI(), watchEventDTO.getFilter());
 				return;
 			}
 		}
@@ -136,8 +142,7 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 			}
 		}
 
-		LOGGER.trace("Executing resource changed method {} on class {} for event {}",
-				pluginAnnotation.getMethod().getName(), plugin.getClass().getName(), event);
+		LOGGER.trace("Executing resource changed method {} on class {} for event {}", pluginAnnotation.getMethod().getName(), plugin.getClass().getName(), event);
 
 		List<Object> args = new ArrayList<Object>();
 		for (Class<?> type : pluginAnnotation.getMethod().getParameterTypes()) {

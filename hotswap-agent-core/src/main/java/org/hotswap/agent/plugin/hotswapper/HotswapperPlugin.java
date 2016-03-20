@@ -60,6 +60,7 @@ public class HotswapperPlugin {
 	@OnClassFileEvent(classNameRegexp = ".*", events = { FileEvent.MODIFY })
 	public void watchReload(CtClass ctClass, ClassLoader appClassLoader, URL url)
 			throws IOException, CannotCompileException {
+		
 		if (!ClassLoaderHelper.isClassLoaded(appClassLoader, ctClass.getName())) {
 			LOGGER.debug("Class {} not loaded yet, no need for autoHotswap, skipped URL {}", ctClass.getName(), url);
 			return;

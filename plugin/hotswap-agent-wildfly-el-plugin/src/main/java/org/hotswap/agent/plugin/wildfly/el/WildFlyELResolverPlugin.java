@@ -115,7 +115,7 @@ public class WildFlyELResolverPlugin {
     
 	@OnResourceFileEvent(path = "/", filter = ".*\\.properties")
 	public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
-		PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader, fileUrl.getFile());
+		PurgeWildFlyBeanELResolverCacheCommand cmd = new PurgeWildFlyBeanELResolverCacheCommand(appClassLoader, null);
         scheduler.scheduleCommand(cmd, 250, DuplicateSheduleBehaviour.SKIP);
 	}
 	

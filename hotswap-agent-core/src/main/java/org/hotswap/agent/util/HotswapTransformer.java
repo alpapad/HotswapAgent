@@ -124,30 +124,27 @@ public class HotswapTransformer implements ClassFileTransformer {
     public byte[] transform(final ClassLoader classLoader, String className, Class<?> redefiningClass,
                             final ProtectionDomain protectionDomain, byte[] bytes) throws IllegalClassFormatException {
         LOGGER.trace("Transform on class '{}' @{} redefiningClass '{}'.", className, classLoader, redefiningClass);
-
-        // ensure classloader initialized
-       ensureClassLoaderInitialized(classLoader, protectionDomain);
-
-        byte[] result = bytes;
-        try {
-            // call transform on all registered transformers
-            for (RegisteredTransformersRecord transformerRecord : new LinkedList<RegisteredTransformersRecord>(registeredTransformers.values())) {
-                if ((className != null && transformerRecord.pattern.matcher(className).matches()) ||
-                        (redefiningClass != null && transformerRecord.pattern.matcher(redefiningClass.getName()).matches())) {
-                    for (ClassFileTransformer transformer : new LinkedList<ClassFileTransformer>(transformerRecord.transformerList)) {
-                        LOGGER.trace("Transforming class '" + className +
-                                "' with transformer '" + transformer + "' " + "@ClassLoader" + classLoader + ".");
-                        result = transformer.transform(classLoader, className, redefiningClass, protectionDomain, result);
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            LOGGER.error("Error transforming class '" + className + "'.", t);
-        }
-
-
-
-        return result;
+        
+	        // ensure classloader initialized
+	       ensureClassLoaderInitialized(classLoader, protectionDomain);
+	        try {
+	        	byte[] result =Arrays.copyOf(bytes, bytes.length);
+	            // call transform on all registered transformers
+	            for (RegisteredTransformersRecord transformerRecord : new LinkedList<RegisteredTransformersRecord>(registeredTransformers.values())) {
+	                if ((className != null && transformerRecord.pattern.matcher(className).matches()) ||
+	                        (redefiningClass != null && transformerRecord.pattern.matcher(redefiningClass.getName()).matches())) {
+	                    for (ClassFileTransformer transformer : new LinkedList<ClassFileTransformer>(transformerRecord.transformerList)) {
+	                        LOGGER.trace("Transforming class '" + className +
+	                                "' with transformer '" + transformer + "' " + "@ClassLoader" + classLoader + ".");
+	                        result = transformer.transform(classLoader, className, redefiningClass, protectionDomain, result);
+	                    }
+	                }
+	            }
+	            return result;
+	        } catch (Throwable t) {
+	            LOGGER.error("Error transforming class '" + className + "'.", t);
+	        }
+        return bytes;
     }
 
     /**

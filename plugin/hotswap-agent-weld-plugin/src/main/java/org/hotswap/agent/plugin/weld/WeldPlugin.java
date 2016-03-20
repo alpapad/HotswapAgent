@@ -78,8 +78,6 @@ public class WeldPlugin {
             LOGGER.info("CDI/Weld plugin initialized in JBossAS.");
             inJbossAS = true;
             initialized = true;
-        }else {
-        	 LOGGER.info("CDI/Weld plugin already initialized in {}", appClassLoader);
         }
     }
 

@@ -77,8 +77,7 @@ public class AnnotationProcessor {
 				}
 			}
 
-			// process annotations on all supporting classes in addition to the
-			// plugin itself
+			// process annotations on all supporting classes in addition to the plugin itself
 			for (Annotation annotation : processClass.getDeclaredAnnotations()) {
 				if (annotation instanceof Plugin) {
 					for (Class<?> supportClass : ((Plugin) annotation).supportClass()) {
@@ -128,7 +127,6 @@ public class AnnotationProcessor {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private boolean processFieldAnnotations(Object plugin, Field field, Class<?> pluginClass) {
 		// for all fields and all handlers
 		for (Annotation annotation : field.getDeclaredAnnotations()) {
@@ -150,7 +148,6 @@ public class AnnotationProcessor {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private boolean processMethodAnnotations(Object plugin, Method method, Class<?> pluginClass) {
 		// for all methods and all handlers
 		for (Annotation annotation : method.getDeclaredAnnotations()) {

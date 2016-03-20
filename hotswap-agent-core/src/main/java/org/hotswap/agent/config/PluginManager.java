@@ -331,6 +331,7 @@ public class PluginManager {
 				instrumentation.redefineClasses(definitions);
 				LOGGER.debug("... reloaded classes {} (autoHotswap)", Arrays.toString(classNames));
 			} catch (Exception e) {
+				LOGGER.error("Error redifining classes" ,e);
 				throw new IllegalStateException("Unable to redefine classes", e);
 			}
 			reloadMap.clear();

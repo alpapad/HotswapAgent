@@ -1,5 +1,8 @@
 package org.hotswap.agent.plugin.jsf;
 
+import static org.hotswap.agent.annotation.FileEvent.CREATE;
+import static org.hotswap.agent.annotation.FileEvent.MODIFY;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -16,7 +19,7 @@ import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.OnClassLoadEvent;
 import org.hotswap.agent.annotation.OnResourceFileEvent;
 import org.hotswap.agent.annotation.Plugin;
-import org.hotswap.agent.command.MergeableCommand;
+import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.Scheduler.DuplicateSheduleBehaviour;
 import org.hotswap.agent.config.PluginConfiguration;
@@ -82,50 +85,72 @@ public class FacesServletPlugin {
 		LOGGER.info("FacesServletPlugin web-app path: {} using classloader {}", this.realPath, appClassLoader);
 	}
 
-	private final MergeableCommand command = new MergeableCommand() {
+	private final Command command = new Command() {
 
 		@Override
 		public void executeCommand() {
 			LOGGER.trace("RUNCOMMAND");
+//			List<String> files = new ArrayList<>();
+//			synchronized (pending) {
+//				LOGGER.trace("Modified Files:{}", pending);
+//				files.addAll(pending);
+//				pending.clear();
+//			}
 			List<String> files = new ArrayList<>();
-			synchronized (pending) {
-				LOGGER.trace("Modifief Files:{}", pending);
-				files.addAll(pending);
-				pending.clear();
-			}
-			for (String p : files) {
-				if(LOGGER.isLevelEnabled(Level.TRACE)) {
-					LOGGER.trace("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
+			while(true) {
+				
+				// Check pending files
+				synchronized (pending) {
+					LOGGER.trace("Modified Files:{}", pending);
+					files.clear();
+					files.addAll(pending);
+					pending.clear();
+					
+					// exit if no files pending...
+					if(files.size() == 0) {
+						return;
+					}
 				}
 				
-				File f = new File(p);
-				for (URL u : pluginConfiguration.getWatchResources()) {
-					LOGGER.trace("Trying path: {}", u);
-					try {
-						File d = new File(u.getFile());
-						if (f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
-							String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "/");
-							if (x.endsWith("//") || x.endsWith("\\/")) {
-								x = x.replace("//", "/").replace("\\/", "/");
+				for (String p : files) {
+					if(LOGGER.isLevelEnabled(Level.TRACE)) {
+						LOGGER.trace("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
+					}
+					
+					File f = new File(p);
+					for (URL u : pluginConfiguration.getWatchResources()) {
+						LOGGER.trace("Trying path: {}", u);
+						try {
+							File d = new File(u.getFile());
+							if (f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
+								String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "/");
+								if (x.endsWith("//") || x.endsWith("\\/")) {
+									x = x.replace("//", "/").replace("\\/", "/");
+								}
+	
+								File toCopy = new File(realPath, x);
+								LOGGER.trace("Copying file {} to {} (isFile:{})", p, toCopy.getAbsolutePath(), toCopy.isFile());
+								if(!toCopy.isFile()) {
+									continue;
+								}
+								try {
+									Files.copy(f.toPath(), toCopy.toPath(), StandardCopyOption.REPLACE_EXISTING);
+								} catch (IOException e) {
+									LOGGER.error("Error copying file {} to {} ",e, p, d + x);
+								}
+							} else {
+								LOGGER.trace("Not a match for  copying file {} to {} ", p, d);
 							}
-							LOGGER.trace("Copying file {} to {} ", p, new File(realPath, x).getAbsolutePath());
-							try {
-								Files.copy(f.toPath(), new File(realPath, x).toPath(), StandardCopyOption.REPLACE_EXISTING);
-							} catch (IOException e) {
-								LOGGER.error("Error copying file {} to {} ",e, p, d + x);
-							}
-						} else {
-							LOGGER.trace("Not a match for  copying file {} to {} ", p, d);
+						} catch (Exception e) {
+							LOGGER.error("Error copying file {} to {} ",e, p, u);
 						}
-					} catch (Exception e) {
-						LOGGER.error("Error copying file {} to {} ",e, p, u);
 					}
 				}
 			}
 		}
 	};
 
-	@OnResourceFileEvent(path = "/", filter = ".*")
+	@OnResourceFileEvent(path = "/", filter = ".*", events= {CREATE, MODIFY})
 	public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
 		if (FileEvent.DELETE.equals(evt) || fileUrl.getFile().endsWith(".class")) {
 			return;

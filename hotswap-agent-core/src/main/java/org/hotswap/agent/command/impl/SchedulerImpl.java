@@ -1,11 +1,13 @@
 package org.hotswap.agent.command.impl;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.hotswap.agent.annotation.handler.WatchEventCommand;
 import org.hotswap.agent.command.Command;
@@ -23,8 +25,9 @@ public class SchedulerImpl implements Scheduler {
 
 	int DEFAULT_SCHEDULING_TIMEOUT = 100;
 
-	final Map<Command, DuplicateScheduleConfig> scheduledCommands = Collections
-			.synchronizedMap(new HashMap<Command, DuplicateScheduleConfig>());
+	final Executor e = Executors.newSingleThreadExecutor();
+	
+	final Map<Command, DuplicateScheduleConfig> scheduledCommands = Collections.synchronizedMap(new LinkedHashMap<Command, DuplicateScheduleConfig>());
 	final Set<Command> runningCommands = Collections.synchronizedSet(new HashSet<Command>());
 
 	Thread runner;
@@ -71,8 +74,7 @@ public class SchedulerImpl implements Scheduler {
 	private boolean processCommands() {
 		Long currentTime = System.currentTimeMillis();
 		synchronized (scheduledCommands) {
-			for (Iterator<Map.Entry<Command, DuplicateScheduleConfig>> it = scheduledCommands.entrySet().iterator(); it
-					.hasNext();) {
+			for (Iterator<Map.Entry<Command, DuplicateScheduleConfig>> it = scheduledCommands.entrySet().iterator(); it.hasNext();) {
 				Map.Entry<Command, DuplicateScheduleConfig> entry = it.next();
 				DuplicateScheduleConfig config = entry.getValue();
 				Command command = entry.getKey();
@@ -113,12 +115,13 @@ public class SchedulerImpl implements Scheduler {
 		}
 
 		runningCommands.add(command);
-		new CommandExecutor(command) {
+		
+		e.execute(new CommandExecutor(command) {
 			@Override
 			public void finished() {
 				runningCommands.remove(command);
 			}
-		}.start();
+		});//.start();
 	}
 
 	@Override

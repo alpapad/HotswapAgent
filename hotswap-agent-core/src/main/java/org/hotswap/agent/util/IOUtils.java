@@ -1,12 +1,15 @@
 package org.hotswap.agent.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.logging.AgentLogger;
@@ -28,6 +31,32 @@ public class IOUtils {
 	/** URL protocol for a JBoss VFS resource: "vfs" */
 	public static final String URL_PROTOCOL_VFS = "vfs";
 
+	
+	private static boolean isFileAvailable(File f) {
+	      long oldSize = 0L;
+	      long newSize = 1L;
+	      boolean fileIsOpen = true;
+	      int tryCount = 0;
+	      
+	      while((newSize > oldSize) || fileIsOpen){
+	          oldSize = f.length();
+	          try {
+	            Thread.sleep(2000);
+	          } catch (InterruptedException e) {
+	            e.printStackTrace();
+	          }
+	          newSize = f.length();
+
+	          try(InputStream is =  new FileInputStream(f)){
+	              fileIsOpen = false;
+	          }catch(Exception e){
+	        	  tryCount++;
+	          }
+	      }
+
+	      System.out.println("New file: " + f.toString());
+	      return true;
+	}
 	/**
 	 * Download URI to byte array.
 	 *
@@ -37,12 +66,13 @@ public class IOUtils {
 	 * @param uri
 	 *            uri to process
 	 * @return byte array
+	 * @throws IOException 
 	 * @throws IllegalArgumentException
 	 *             for download problems
 	 */
-	public static byte[] toByteArray(URI uri) {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
+	public static byte[] toByteArray(URI uri) throws IOException {
+		Path path = null; 
+		
 		InputStream inputStream = null;
 		int tryCount = 0;
 		while (inputStream == null) {
@@ -77,21 +107,22 @@ public class IOUtils {
 			
 		}
 
-		try {
-			byte[] chunk = new byte[4096];
-			int bytesRead;
-			try(InputStream stream = uri.toURL().openStream()){
-	
-				while ((bytesRead = stream.read(chunk)) > 0) {
-					outputStream.write(chunk, 0, bytesRead);
-				}
-			}
-
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		return outputStream.toByteArray();
+		return Files.readAllBytes(new File(uri).toPath());
+//		try {
+//			byte[] chunk = new byte[4096];
+//			int bytesRead;
+//			try(InputStream stream = uri.toURL().openStream()){
+//	
+//				while ((bytesRead = stream.read(chunk)) > 0) {
+//					outputStream.write(chunk, 0, bytesRead);
+//				}
+//			}
+//
+//		} catch (IOException e) {
+//			throw new IllegalArgumentException(e);
+//		}
+//
+//		return outputStream.toByteArray();
 	}
 
 	/**

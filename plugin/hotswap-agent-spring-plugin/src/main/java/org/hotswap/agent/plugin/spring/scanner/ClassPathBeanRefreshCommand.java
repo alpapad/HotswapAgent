@@ -7,6 +7,7 @@ import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.IOUtils;
 import org.hotswap.agent.watch.WatchFileEvent;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -63,7 +64,10 @@ public class ClassPathBeanRefreshCommand extends MergeableCommand {
                 } catch (IllegalArgumentException e) {
                     LOGGER.debug("File {} not found on filesystem (deleted?). Unable to refresh associated Spring bean.", event.getURI());
                     return;
-                }
+                } catch (IOException e) {
+                    LOGGER.debug("File {} not found on filesystem (deleted?). Unable to refresh associated Spring bean.", event.getURI());
+                	return;
+				}
             }
 
             LOGGER.debug("Executing ClassPathBeanDefinitionScannerAgent.refreshClass('{}')", className);
