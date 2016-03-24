@@ -1,15 +1,12 @@
 package org.hotswap.agent.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.logging.AgentLogger;
@@ -32,31 +29,6 @@ public class IOUtils {
 	public static final String URL_PROTOCOL_VFS = "vfs";
 
 	
-	private static boolean isFileAvailable(File f) {
-	      long oldSize = 0L;
-	      long newSize = 1L;
-	      boolean fileIsOpen = true;
-	      int tryCount = 0;
-	      
-	      while((newSize > oldSize) || fileIsOpen){
-	          oldSize = f.length();
-	          try {
-	            Thread.sleep(2000);
-	          } catch (InterruptedException e) {
-	            e.printStackTrace();
-	          }
-	          newSize = f.length();
-
-	          try(InputStream is =  new FileInputStream(f)){
-	              fileIsOpen = false;
-	          }catch(Exception e){
-	        	  tryCount++;
-	          }
-	      }
-
-	      System.out.println("New file: " + f.toString());
-	      return true;
-	}
 	/**
 	 * Download URI to byte array.
 	 *
@@ -70,14 +42,11 @@ public class IOUtils {
 	 * @throws IllegalArgumentException
 	 *             for download problems
 	 */
-	public static byte[] toByteArray(URI uri) throws IOException {
-		Path path = null; 
-		
-		InputStream inputStream = null;
+	public static byte[] toByteArray(URI uri) throws IOException {	
 		int tryCount = 0;
-		while (inputStream == null) {
-			try {
-				inputStream = uri.toURL().openStream();
+		while (true) {
+			try(InputStream inputStream  = uri.toURL().openStream();) {
+				break;
 			} catch (FileNotFoundException e) {
 				// some IDEs remove and recreate whole package multiple times
 				// while recompiling -
@@ -95,34 +64,10 @@ public class IOUtils {
 				}
 			} catch (Exception e) {
 				throw new IllegalStateException(e);
-			} finally{
-				if(inputStream != null){
-					try {
-						inputStream.close();
-					} catch (IOException e) {
-						throw new IllegalStateException(e);
-					}
-				}
-			}
-			
+			} 
 		}
 
 		return Files.readAllBytes(new File(uri).toPath());
-//		try {
-//			byte[] chunk = new byte[4096];
-//			int bytesRead;
-//			try(InputStream stream = uri.toURL().openStream()){
-//	
-//				while ((bytesRead = stream.read(chunk)) > 0) {
-//					outputStream.write(chunk, 0, bytesRead);
-//				}
-//			}
-//
-//		} catch (IOException e) {
-//			throw new IllegalArgumentException(e);
-//		}
-//
-//		return outputStream.toByteArray();
 	}
 
 	/**
