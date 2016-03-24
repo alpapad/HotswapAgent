@@ -99,24 +99,24 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 	public void onWatchEvent(PluginAnnotation<T> pluginAnnotation, WatchFileEvent event, ClassLoader classLoader) {
 		Object plugin = pluginAnnotation.getPlugin();
 
-		LOGGER.debug("onWatchEvent URI {} {}", event.getURI(), event.getEventType());
+		LOGGER.trace("onWatchEvent URI {} {}", event.getURI(), event.getEventType());
 		
 		// regular files filter
 		if (watchEventDTO.isOnlyRegularFiles() && !event.isFile()) {
-			LOGGER.debug("Skipping URI {} because it is not a regular file.", event.getURI());
+			LOGGER.trace("Skipping URI {} because it is not a regular file.", event.getURI());
 			return;
 		}
 
 		// watch type filter
 		if (!events.contains(event.getEventType())) {
-			LOGGER.debug("Skipping URI {} because it is not a requested event.", event.getURI());
+			LOGGER.trace("Skipping URI {} because it is not a requested event.", event.getURI());
 			return;
 		}
 
 		// resource name filter regexp
 		if (hasFilter) {
 			if (!event.getURI().toString().matches(watchEventDTO.getFilter())) {
-				LOGGER.debug("Skipping URI {} because it does not match filter.", event.getURI(), watchEventDTO.getFilter());
+				LOGGER.trace("Skipping URI {} because it does not match filter.", event.getURI(), watchEventDTO.getFilter());
 				return;
 			}
 		}

@@ -34,7 +34,9 @@ import org.jboss.weld.bean.attributes.BeanAttributesFactory;
 import org.jboss.weld.bean.builtin.BeanManagerProxy;
 import org.jboss.weld.bootstrap.spi.BeanDeploymentArchive;
 import org.jboss.weld.bootstrap.spi.BeansXml;
+import org.jboss.weld.context.AbstractBoundContext;
 import org.jboss.weld.context.AbstractConversationContext;
+import org.jboss.weld.context.AbstractSharedContext;
 import org.jboss.weld.manager.BeanManagerImpl;
 import org.jboss.weld.metadata.TypeStore;
 import org.jboss.weld.resources.ClassTransformer;
@@ -259,6 +261,9 @@ public class BeanDeploymentArchiveAgent {
 			managedBean.setProducer(
 					beanManager.getLocalInjectionTargetFactory(eat).createInjectionTarget(eat, managedBean, false));
 
+			Object xx = managedBean.getProducer().produce(beanManager.createCreationalContext(managedBean));
+			managedBean.getProducer().inject(xx, beanManager.createCreationalContext(managedBean));
+
 			try {
 				Field contextsField = BeanManagerImpl.class.getField("contexts");
 				contextsField.setAccessible(true);
@@ -267,24 +272,42 @@ public class BeanDeploymentArchiveAgent {
 				List<?> contextxs = ctxs.get(managedBean.getScope());
 				if((contextxs != null) && (contextxs.size() > 0)) {
 					for(Object get: contextxs) {
+						Object orig = get;
 						if (get != null) {
-							if(get instanceof AlterableContext) {
-								
-								if(get instanceof ForwardingContext) {
-									get = ForwardingContext.unwrap(Context.class.cast(get));
-								}
-								LOGGER.debug("XXXXXXXXXXXXX '{}'", get.getClass());
-								
-								//AlterableContext.class.cast(get).destroy(managedBean);
-								Field toRedefine = AbstractConversationContext.class.getField("toRedefine");
-								
-								List.class.cast(toRedefine.get(get)).add(managedBean);
-								
-							} else {
+							if(get instanceof ForwardingContext) {
+								get = ForwardingContext.unwrap(Context.class.cast(get));
+							}
+							if(get instanceof AbstractBoundContext) {
+								AbstractBoundContext ctx = AbstractBoundContext.class.cast(get);
+
+								LOGGER.debug("XXXXXXXXXXXXX '{}' {}  {} {} ", ctx.getClass(),
+										ctx.getScope().equals(managedBean.getScope()), ctx.getScope(),
+										managedBean.getScope());
+
+								Field toRedefine = AbstractBoundContext.class.getField("toRedefine");
+
+								List.class.cast(toRedefine.get(ctx)).add(managedBean);
+							} else if(get instanceof AbstractSharedContext) {
+								AbstractSharedContext ctx = AbstractSharedContext.class.cast(get);
 								try {
-									LOGGER.debug("Bean injection points are reinitialized '{}'", beanClass.getName());
-									managedBean.getProducer().inject(get, beanManager.createCreationalContext(managedBean));
+									ctx.destroy(managedBean);
+								} catch(Exception e) {
+									LOGGER.debug("No active contexts for {} -> {} ???", e, managedBean.getScope(), beanClass.getName());
+								}
+							}else if(get instanceof AlterableContext) {
+								AlterableContext ctx = AlterableContext.class.cast(get);
+								try {
+									ctx.destroy(managedBean);
+								} catch(Exception e) {
+									LOGGER.debug("No active contexts for {} -> {} ???", e, managedBean.getScope(), beanClass.getName());
+								}								
+							}
+							else {
+								try {
+									Object xx1 = managedBean.getProducer().produce(beanManager.createCreationalContext(managedBean));
 									
+									LOGGER.debug("Bean injection points are reinitialized '{}'", beanClass.getName());
+									managedBean.getProducer().inject(xx1, beanManager.createCreationalContext(managedBean));
 								} catch(Exception e) {
 									LOGGER.debug("No active contexts for {} -> {} ???", e, managedBean.getScope(), beanClass.getName());
 								}

@@ -28,12 +28,23 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 	/**
 	 * Register the given directory with the WatchService
 	 */
-	private void register(Path dir) throws IOException {
+	private void register(Path parent, Path dir) throws IOException {
 		// check duplicate registration
 		if (keys.values().contains(dir)) {
 			return;
 		}
-
+		
+		if(parent != null && keys.values().contains(parent)) {
+			return;
+		}
+		
+		for(Path p: keys.values()) {
+			if(dir.startsWith(p)) {
+				LOGGER.debug("Path {} watched via {}", dir, p);
+				return;
+			}
+		}
+		
 		// try to set high sensitivity
 		WatchEvent.Modifier high = Util.get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH();
 		WatchEvent.Modifier fileTree = Util.get_com_sun_nio_file_ExtendedWatchEventModifier_FILE_TREE();
@@ -57,7 +68,14 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 	 * Register the given directory, and all its sub-directories, with the
 	 * WatchService.
 	 */
-	protected void registerAll(final Path start) throws IOException {
-		register(start);
+	protected void registerAll(final Path parent, final Path start) throws IOException {
+		// register directory and sub-directories
+		LOGGER.info("Registering directory  {} under parent {}", parent,  start);
+		if(parent != null && keys.values().contains(parent)) {
+			LOGGER.info("Registering directory  {} under parent {}, SKIPPED", parent,  start);
+			return;
+		}
+		
+		register(parent, start);
 	}
 }

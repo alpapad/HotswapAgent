@@ -157,7 +157,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			if (keys.values().contains(dir)) {
 				return;
 			}
-			registerAll(dir);
+			registerAll(null, dir);
 		} catch (IllegalArgumentException e) {
 			throw new IOException("Invalid URI format " + path, e);
 		} catch (FileSystemNotFoundException e) {
@@ -167,7 +167,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 		}
 	}
 
-	protected abstract void registerAll(final Path start) throws IOException;
+	protected abstract void registerAll(final Path real, final Path start) throws IOException;
 
 	/**
 	 * Process all events for keys queued to the watcher
@@ -203,19 +203,19 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			Path name = ev.context();
 			Path child = dir.resolve(name);
 
-			LOGGER.trace("Watch event '{}' on '{}'", event.kind().name(), child);
+			LOGGER.debug("Watch event '{}' on '{}'", event.kind().name(), child);
 
-			if(!paused) {
+			//if(!paused) {
 				callListeners(event, child);
-			}else {
-				LOGGER.debug("Polling is paused...");
-			}
+			//}else {
+			//	LOGGER.debug("Polling is paused...");
+			//}
 			// if directory is created, and watching recursively, then
 			// register it and its sub-directories
 			if (kind == ENTRY_CREATE) {
 				try {
 					if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-						registerAll(child);
+						registerAll(dir, child);
 					}
 				} catch (IOException x) {
 					LOGGER.warning("Unable to register events for directory {}", x, child);
@@ -226,6 +226,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 		// reset key and remove from set if directory no longer accessible
 		boolean valid = key.reset();
 		if (!valid) {
+			LOGGER.warning("Watcher on {} not valid, removing...", keys.get(key));
 			keys.remove(key);
 			// all directories are inaccessible
 			if (keys.isEmpty()) {
@@ -237,9 +238,13 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 
 	// notify listeners about new event
 	private void callListeners(final WatchEvent<?> event, final Path path) {
+		//LOGGER.debug("Checking {} --->  {}", path, event.kind());
+		boolean matchedOne = false;
 		for (Map.Entry<Path, List<WatchEventListener>> list : listeners.entrySet()) {
-			for (WatchEventListener listener : list.getValue()) {
-				if (path.startsWith(list.getKey())) {
+			//LOGGER.debug("Checking {} ---> {}, {}", path, list.getKey(), event.kind());
+			if (path.startsWith(list.getKey())) {
+				matchedOne = true;
+				for (WatchEventListener listener : list.getValue()) {
 					WatchFileEvent agentEvent = new HotswapWatchFileEvent(event, path);
 					try {
 						listener.onEvent(agentEvent);
@@ -248,6 +253,9 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 					}
 				}
 			}
+		}
+		if(!matchedOne) {
+			LOGGER.error("No match for  watch event '{}',  path '{}'",  event, path);
 		}
 	}
 

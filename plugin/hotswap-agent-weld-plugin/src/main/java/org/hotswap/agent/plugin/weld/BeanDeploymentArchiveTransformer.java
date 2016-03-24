@@ -134,8 +134,9 @@ public class BeanDeploymentArchiveTransformer {
 		sb.append("java.util.Iterator it = toRedefine.iterator();\n");
 		sb.append("while(it.hasNext()){\n");
 
-		sb.append(" javax.enterprise.context.spi.Contextual c = javax.enterprise.context.spi.Contextual.class.cast(it.next());\n");
+		sb.append(" org.jboss.weld.bean.ManagedBean c = org.jboss.weld.bean.ManagedBean.class.cast(it.next());\n");
 		sb.append(" System.err.println(\"Reloading........\" + c + \", :\" + this);\n");
+		sb.append(" try{c.getProducer().inject(c.getProducer().produce(c.getBeanManager().createCreationalContext(c)), c.getBeanManager().createCreationalContext(c));} catch(java.lang.Exception e) { e.printStackTrace();}\n");
 		sb.append(" try{this.destroy((javax.enterprise.context.spi.Contextual)c);} catch(java.lang.Exception e) { e.printStackTrace();}\n");		
 //		sb.append(" it.remove(); ");	
 //		sb.append("for(Object o: toRedefine) {");

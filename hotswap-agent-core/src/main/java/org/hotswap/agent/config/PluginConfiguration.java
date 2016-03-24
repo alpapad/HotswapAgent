@@ -240,8 +240,8 @@ public class PluginConfiguration {
 	 */
 	public URL[] getExtraClasspath() {
 		URL[] extraClassPath = merged.getUrls("extraClasspath");
-		if (LOGGER.isLevelEnabled(Level.DEBUG)) {
-			LOGGER.debug("Getting extraClasspath {}. ", Arrays.toString(extraClassPath));
+		if (LOGGER.isLevelEnabled(Level.TRACE)) {
+			LOGGER.trace("Getting extraClasspath {}. ", Arrays.toString(extraClassPath));
 		}
 		return extraClassPath;
 	}
@@ -252,8 +252,8 @@ public class PluginConfiguration {
 	 */
 	public URL[] getWatchResources() {
 		URL[] watchResources = merged.getUrls("watchResources");
-		if (LOGGER.isLevelEnabled(Level.DEBUG)) {
-			LOGGER.debug("Getting watchResources {}. ", Arrays.toString(watchResources));
+		if (LOGGER.isLevelEnabled(Level.TRACE)) {
+			LOGGER.trace("Getting watchResources {}. ", Arrays.toString(watchResources));
 		}
 		return watchResources;
 	}
