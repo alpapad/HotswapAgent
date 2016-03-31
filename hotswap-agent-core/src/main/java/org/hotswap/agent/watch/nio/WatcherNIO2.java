@@ -37,9 +37,7 @@ public class WatcherNIO2 extends AbstractNIO2Watcher {
 	protected void registerAll(final Path parent, Path start) throws IOException {
 		// register directory and sub-directories
 		LOGGER.info("Registering directory  {} under parent {}", start, parent);
-		if(parent == null) {
-			start = start.getParent();
-		}
+
 		Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -53,17 +51,13 @@ public class WatcherNIO2 extends AbstractNIO2Watcher {
 	 * Register the given directory with the WatchService
 	 */
 	private void register(Path dir) throws IOException {
-//		// check duplicate registration
-//		if (keys.values().contains(dir)) {
-//			return;
-//		}
-
+		
 		// try to set high sensitivity
 		WatchEvent.Modifier high = Util.get_com_sun_nio_file_SensitivityWatchEventModifier_HIGH();
 		WatchKey key = high == null ? dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
 				: dir.register(watcher, new WatchEvent.Kind<?>[] { ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY }, high);
 
 		
-		keys.put(key, dir);
+		keys.put(key, PathPair.get(dir));
 	}
 }

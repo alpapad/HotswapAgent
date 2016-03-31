@@ -27,38 +27,43 @@ public class IOUtils {
 	// some IDEs remove and recreate whole package multiple times while
 	// recompiling -
 	// we may need to wait for a file to be available on a filesystem
-	private static boolean fileIsMutating(File file){
-	      long oldSize = 0L;
-	      long newSize = 1L;
-	      boolean fileIsOpen = true;
-	      
-	      int count = 0;
-	      //File file = new File(uri);
-	      
-	      while((newSize > oldSize) || fileIsOpen){
-	    	  if(count > 15) {
-	    		  return true;
-	    	  }
-	          oldSize = file.length();
-	          try {
-	            Thread.sleep(300);
-	          } catch (InterruptedException e) {
-	            LOGGER.debug("Thread interupted.... {}", e, file);
-	            return true;
-	          }
-	          newSize = file.length();
+	private static boolean fileIsMutating(File file) {
+		if (!file.exists()) {
+			LOGGER.debug("File does not exist!.... {}", file);
+			return true;
+		}
+		long oldSize = 0L;
+		long newSize = 1L;
+		boolean fileIsOpen = true;
 
-	          try(InputStream is = new FileInputStream(file)){
-	              fileIsOpen = false;
-	          }catch(Exception e){
-	        	  LOGGER.trace("File is locked/open {}", e, file);
-	        	  count++;
-	          }
-	      }
+		int count = 0;
+		// File file = new File(uri);
 
-	      return false;
-	      		
+		while ((newSize > oldSize) || fileIsOpen) {
+			if (count > 2) {
+				return true;
+			}
+			oldSize = file.length();
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				LOGGER.debug("Thread interupted.... {}", e, file);
+				return true;
+			}
+			newSize = file.length();
+
+			try (InputStream is = new FileInputStream(file)) {
+				fileIsOpen = false;
+			} catch (Exception e) {
+				LOGGER.trace("File is locked/open {}", e, file);
+				count++;
+			}
+		}
+
+		return false;
+
 	}
+
 	/**
 	 * Download URI to byte array.
 	 *
@@ -68,23 +73,31 @@ public class IOUtils {
 	 * @param uri
 	 *            uri to process
 	 * @return byte array
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws IllegalArgumentException
 	 *             for download problems
 	 */
-	public static byte[] toByteArray(URI uri) throws IOException {	
-		if(fileIsMutating(new File(uri))) {
-			throw new IllegalArgumentException("URI " + uri + " can not be opened!");
+	public static byte[] toByteArray(URI uri) throws IOException {
+		if (fileIsMutating(new File(uri))) {
+			return null;
 		}
 		return Files.readAllBytes(new File(uri).toPath());
 	}
 
-	public static void copy(File source, File dest) throws IOException{
-		if(fileIsMutating(source)) {
+	public static void copy(File source, File dest) throws IOException {
+		if (fileIsMutating(source)) {
 			throw new IllegalArgumentException("File  " + source + " can not be opened!");
+		}
+		try {
+			if (!dest.mkdirs()) {
+				LOGGER.error("Can not create path up to: {}", dest.toPath());
+			}
+		} catch (Exception e) {
+			LOGGER.error("Can not create path up to: {}", e, dest.toPath());
 		}
 		Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
+
 	/**
 	 * Convert input stream to a string.
 	 * 
@@ -124,13 +137,14 @@ public class IOUtils {
 	public static boolean isDirectoryURL(URL url) {
 		try {
 			File f = new File(url.toURI());
-			if(f.exists() && f.isDirectory()) {
+			if (f.exists() && f.isDirectory()) {
 				return true;
 			}
 		} catch (Exception e) {
 		}
 		return false;
 	}
+
 	/**
 	 * Return fully qualified class name of class file on a URI.
 	 *

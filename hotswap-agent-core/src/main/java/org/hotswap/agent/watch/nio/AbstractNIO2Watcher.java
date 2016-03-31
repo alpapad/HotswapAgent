@@ -18,10 +18,11 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
@@ -56,12 +57,12 @@ import org.hotswap.agent.watch.Watcher;
 public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	protected AgentLogger LOGGER = AgentLogger.getLogger(this.getClass());
 
-	protected final WatchService watcher;
-	protected final Map<WatchKey, Path> keys;
-	private final Map<Path, List<WatchEventListener>> listeners = new HashMap<Path, List<WatchEventListener>>();
+	protected WatchService watcher;
+	protected final Map<WatchKey, PathPair> keys;
+	private final Map<Path, List<WatchEventListener>> listeners = new ConcurrentHashMap<Path, List<WatchEventListener>>();
 
 	// keep track about which classloader requested which event
-	protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new HashMap<WatchEventListener, ClassLoader>();
+	protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new ConcurrentHashMap<WatchEventListener, ClassLoader>();
 
 	private Thread runner;
 
@@ -71,7 +72,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 
 	public AbstractNIO2Watcher() throws IOException {
 		this.watcher = FileSystems.getDefault().newWatchService();
-		this.keys = new HashMap<WatchKey, Path>();
+		this.keys = new ConcurrentHashMap<WatchKey, PathPair>();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -135,13 +136,54 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	 */
 	@Override
 	public void closeClassLoader(ClassLoader classLoader) {
-		for (Iterator<Map.Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet().iterator(); entryIterator.hasNext();) {
-			Map.Entry<WatchEventListener, ClassLoader> entry = entryIterator.next();
+		for (Iterator<Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet().iterator(); entryIterator.hasNext();) {
+			Entry<WatchEventListener, ClassLoader> entry = entryIterator.next();
 			if (entry.getValue().equals(classLoader)) {
 				entryIterator.remove();
-				for (List<WatchEventListener> transformerList : listeners.values()) {
-					transformerList.remove(entry.getKey());
+				try{
+					for (Iterator<Entry<Path, List<WatchEventListener>>> listenersIterator = listeners.entrySet().iterator(); listenersIterator.hasNext();) {
+							Entry<Path, List<WatchEventListener>> pathListenerEntry = listenersIterator.next();
+							List<WatchEventListener> l = pathListenerEntry.getValue();
+							
+							if(l != null) {
+								l.remove(entry.getKey());
+							} 
+							
+							if(l == null || l.isEmpty()) {
+								listenersIterator.remove();
+							}
+	
+					}
+				} catch(Exception e) {
+					// ERROR [org.jboss.msc.service] (MSC service thread 1-4) MSC000002: Invocation of listener "org.jboss.as.server.moduleservice.ServiceModuleLoader$ModuleSpecLoadListener@3450d6b5" failed: java.util.NoSuchElementException
+					LOGGER.error("Ooops", e);
+				}				
+			}
+		}
+		// cleanup...
+		if(classLoaderListeners.isEmpty()) {
+			listeners.clear();
+			for(WatchKey wk: keys.keySet()) {
+				try{
+					wk.cancel();
+				}catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+			}
+			try {
+				this.watcher.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			LOGGER.info("All classloaders closed, released watch service..");
+			try {
+				//Reset
+				this.watcher = FileSystems.getDefault().newWatchService();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		LOGGER.debug("All watch listeners removed for classLoader {}", classLoader);
@@ -153,10 +195,6 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	public void addDirectory(URI path) throws IOException {
 		try {
 			Path dir = Paths.get(path);
-
-			if (keys.values().contains(dir)) {
-				return;
-			}
 			registerAll(null, dir);
 		} catch (IllegalArgumentException e) {
 			throw new IOException("Invalid URI format " + path, e);
@@ -167,7 +205,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 		}
 	}
 
-	protected abstract void registerAll(final Path real, final Path start) throws IOException;
+	protected abstract void registerAll(final Path watched, final Path target) throws IOException;
 
 	/**
 	 * Process all events for keys queued to the watcher
@@ -183,7 +221,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			return true;
 		}
 
-		Path dir = keys.get(key);
+		PathPair dir = keys.get(key);
 		
 		if (dir == null) {
 			LOGGER.warning("WatchKey '{}' not recognized", key);
@@ -203,7 +241,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			Path name = ev.context();
 			Path child = dir.resolve(name);
 
-			LOGGER.debug("Watch event '{}' on '{}'", event.kind().name(), child);
+			LOGGER.debug("Watch event '{}' on '{}' --> {}", event.kind().name(), child, name);
 
 			// if(!paused) {
 			callListeners(event, child);
@@ -215,7 +253,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			if (kind == ENTRY_CREATE) {
 				try {
 					if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-						registerAll(dir, child);
+						registerAll(dir.getWatched(), child);
 					}
 				} catch (IOException x) {
 					LOGGER.warning("Unable to register events for directory {}", x, child);
@@ -244,11 +282,8 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 
 	// notify listeners about new event
 	private void callListeners(final WatchEvent<?> event, final Path path) {
-		// LOGGER.debug("Checking {} ---> {}", path, event.kind());
 		boolean matchedOne = false;
 		for (Map.Entry<Path, List<WatchEventListener>> list : listeners.entrySet()) {
-			// LOGGER.debug("Checking {} ---> {}, {}", path, list.getKey(),
-			// event.kind());
 			if (path.startsWith(list.getKey())) {
 				matchedOne = true;
 				for (WatchEventListener listener : list.getValue()) {
@@ -284,6 +319,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			}
 		};
 		runner.setDaemon(true);
+		runner.setName("HotSwap Watcher");
 		runner.start();
 	}
 

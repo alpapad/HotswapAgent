@@ -28,19 +28,12 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 	/**
 	 * Register the given directory with the WatchService
 	 */
-	private void register(Path parent, Path dir) throws IOException {
-		// check duplicate registration
-		if (keys.values().contains(dir)) {
-			return;
-		}
+	private void register(Path watched, Path target) throws IOException {
 		
-		if(parent != null && keys.values().contains(parent)) {
-			return;
-		}
-		
-		for(Path p: keys.values()) {
-			if(dir.startsWith(p)) {
-				LOGGER.debug("Path {} watched via {}", dir, p);
+		for(PathPair p: keys.values()) {
+			// This may NOT be correct for all cases (ensure resolve will work!)
+			if(p.isWatching(target)) {
+				LOGGER.debug("Path {} watched via {}", target, p.getWatched());
 				return;
 			}
 		}
@@ -51,33 +44,29 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 
 		WatchKey key;
 		if (high == null) {
-			LOGGER.debug("WATCHING:ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY - fileTree} {}", dir);
-			key = dir.register(watcher, //
+			LOGGER.debug("WATCHING:ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY - fileTree} {}", watched);
+			key = watched.register(watcher, //
 					new WatchEvent.Kind<?>[] { ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY }, //
 					new WatchEvent.Modifier[] { fileTree });
 		} else {
-			LOGGER.debug("WATCHING: ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY - fileTree,high {}", dir);
-			key = dir.register(watcher, //
+			LOGGER.debug("WATCHING: ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY - fileTree,high {}", watched);
+			key = watched.register(watcher, //
 					new WatchEvent.Kind<?>[] { ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY }, //
 					new WatchEvent.Modifier[] { fileTree, high });
 		}
-		keys.put(key, dir);
+		keys.put(key, new PathPair(target, watched));
 	}
 
 	/**
 	 * Register the given directory, and all its sub-directories, with the
 	 * WatchService.
 	 */
-	protected void registerAll(final Path parent, Path start) throws IOException {
-		// register directory and sub-directories
-		LOGGER.info("Registering directory  {} under parent {}", start, parent);
-//		if(parent != null && keys.values().contains(parent)) {
-//			LOGGER.info("Registering directory  {} under parent {}, SKIPPED", start, parent);
-//			return;
-//		}
-		if(parent == null){
-			start = start.getParent();
+	protected void registerAll(Path watched, Path target) throws IOException {
+		if(watched == null){
+			watched = target.getParent();
 		}
-		register(parent, start);
+		LOGGER.info("Registering directory target {} via watched: {}", target, watched);
+		
+		register(watched, target);
 	}
 }

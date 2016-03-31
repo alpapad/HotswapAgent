@@ -2,6 +2,7 @@ package org.hotswap.agent.annotation.handler;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -202,6 +203,13 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 		ClassPool cp = new ClassPool();
 		cp.appendClassPath(new LoaderClassPath(classLoader));
 
-		return cp.makeClass(new ByteArrayInputStream(IOUtils.toByteArray(uri)));
+		byte[] bytes = IOUtils.toByteArray(uri);
+		if(bytes != null) {
+			try(InputStream is = new ByteArrayInputStream(bytes)){
+				return cp.makeClass(is);
+			}
+		}
+		LOGGER.trace("Empty class for {} ", uri);
+		return null;
 	}
 }

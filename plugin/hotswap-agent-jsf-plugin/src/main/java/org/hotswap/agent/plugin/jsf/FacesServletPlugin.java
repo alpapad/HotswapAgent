@@ -94,7 +94,7 @@ public class FacesServletPlugin {
 				
 				// Check pending files
 				synchronized (pending) {
-					LOGGER.debug("Modified Files:{}", pending);
+					LOGGER.trace("Modified Files:{}", pending);
 					files.clear();
 					files.addAll(pending);
 					pending.clear();
@@ -107,40 +107,46 @@ public class FacesServletPlugin {
 				
 				for (String p : files) {
 					if(LOGGER.isLevelEnabled(Level.DEBUG)) {
-						LOGGER.debug("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
+						LOGGER.trace("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
 					}
 					
-					File f = new File(p);
 					for (URL u : pluginConfiguration.getWatchResources()) {
-						LOGGER.trace("Trying path: {}", u);
-						try {
-							File d = new File(u.getFile());
-							if (f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
-								String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "");
-								x = x.replace('\\','/').replace("//", "/");
-	
-								File toCopy = new File(realPath, x);
-								LOGGER.debug("Copying file {} to {} (isFile:{})", f.toPath(), toCopy.getAbsolutePath(), toCopy.isFile());
-								if(!toCopy.isFile()) {
-									continue;
-								}
-								try {
-									IOUtils.copy(f, toCopy);
-								} catch (Exception e) {
-									LOGGER.error("Error copying file {} to {} ",e, p, d + x);
-								}
-							} else {
-								LOGGER.trace("Not a match for  copying file {} to {} ", p, d);
-							}
-						} catch (Exception e) {
-							LOGGER.error("Error copying file {} to {} ",e, p, u);
-						}
+						tryCopy(p, u);
 					}
+			
 				}
 			}
 		}
 	};
 
+	private void tryCopy(String changedFilePath, URL watchResourceUrl){
+		File changedFile = new File(changedFilePath);
+		LOGGER.trace("Trying path: {} ({})", watchResourceUrl.getFile());
+		try {
+			File d = new File(watchResourceUrl.getFile());
+			if (changedFile.getAbsolutePath().startsWith(d.getAbsolutePath())) {
+				
+				String x = changedFile.getAbsolutePath().replace(d.getAbsolutePath(), "");
+				x = x.replace('\\','/').replace("//", "/");
+
+				File toCopy = new File(realPath, x);
+				LOGGER.debug("Copying file {} to {} (isFile:{})", changedFile.toPath(), toCopy.getAbsolutePath(), toCopy.isFile());
+				if(toCopy.isDirectory()) {
+					LOGGER.error("Destination is a directory.. can not continue..");
+					return;
+				}
+				try {
+					IOUtils.copy(changedFile, toCopy);
+				} catch (Exception e) {
+					LOGGER.error("Error copying file {} to {} ",e, changedFilePath, d + x);
+				}
+			} else {
+				LOGGER.trace("Not a match for  copying file {} to {} ", changedFilePath, d);
+			}
+		} catch (Exception e) {
+			LOGGER.trace("Error copying file {} to {} ",e, changedFilePath, watchResourceUrl);
+		}	
+	}
 	@OnResourceFileEvent(path = "/", filter = ".*", events= {CREATE, MODIFY})
 	public void refreshJsfResourceBundles(URL fileUrl, FileEvent evt, ClassLoader appClassLoader) {
 		if (FileEvent.DELETE.equals(evt) || fileUrl.getFile().endsWith(".class")) {

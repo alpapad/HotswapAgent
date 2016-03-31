@@ -145,22 +145,18 @@ public class BeanDeploymentArchiveTransformer {
 
 		_redefine.append("   java.util.Iterator it = toRedefine.iterator();\n");
 		_redefine.append("   while(it.hasNext()){\n");
-
-		_redefine.append(
-				"    org.jboss.weld.bean.ManagedBean managedBean = org.jboss.weld.bean.ManagedBean.class.cast(it.next());\n");
+		_redefine.append("    org.jboss.weld.bean.ManagedBean managedBean = org.jboss.weld.bean.ManagedBean.class.cast(it.next());\n");
 		_redefine.append("    System.err.println(\"Reloading........\" + managedBean + \", :\" + this);\n");
 		_redefine.append("    try{ \n");
-		_redefine.append(
-				"      Object inst = managedBean.getProducer().produce(managedBean.getBeanManager().createCreationalContext(managedBean));\n");
-		_redefine.append(
-				"      managedBean.getProducer().inject(inst, managedBean.getBeanManager().createCreationalContext(managedBean));\n");
+		_redefine.append("      Object inst = managedBean.getProducer().produce(managedBean.getBeanManager().createCreationalContext(managedBean));\n");
+		_redefine.append("      managedBean.getProducer().inject(inst, managedBean.getBeanManager().createCreationalContext(managedBean));\n");
 		_redefine.append("    } catch(java.lang.Exception e){\n");
 		_redefine.append("      e.printStackTrace();}\n");
 		_redefine.append("    }\n");
 		_redefine.append("   }\n");
 		_redefine.append("   toRedefine.clear();\n");
 		_redefine.append(
-				"   {System.err.println(\"redefine called on org.jboss.weld.util.ForwardingContext:\" + this);}\n");
+				"   {System.err.println(\"org.jboss.weld.context.AbstractManagedContext:\" + this);}\n");
 		_redefine.append(" }\n");
 
 		CtMethod redefine = CtMethod.make(_redefine.toString(), clazz);
