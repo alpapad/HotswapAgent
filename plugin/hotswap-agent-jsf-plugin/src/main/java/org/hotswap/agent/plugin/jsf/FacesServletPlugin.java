@@ -4,10 +4,7 @@ import static org.hotswap.agent.annotation.FileEvent.CREATE;
 import static org.hotswap.agent.annotation.FileEvent.MODIFY;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -29,6 +26,7 @@ import org.hotswap.agent.javassist.CtClass;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.logging.AgentLogger.Level;
+import org.hotswap.agent.util.IOUtils;
 import org.hotswap.agent.util.PluginManagerInvoker;
 
 /**
@@ -90,18 +88,13 @@ public class FacesServletPlugin {
 		@Override
 		public void executeCommand() {
 			LOGGER.trace("RUNCOMMAND");
-//			List<String> files = new ArrayList<>();
-//			synchronized (pending) {
-//				LOGGER.trace("Modified Files:{}", pending);
-//				files.addAll(pending);
-//				pending.clear();
-//			}
+			
 			List<String> files = new ArrayList<>();
 			while(true) {
 				
 				// Check pending files
 				synchronized (pending) {
-					LOGGER.trace("Modified Files:{}", pending);
+					LOGGER.debug("Modified Files:{}", pending);
 					files.clear();
 					files.addAll(pending);
 					pending.clear();
@@ -113,8 +106,8 @@ public class FacesServletPlugin {
 				}
 				
 				for (String p : files) {
-					if(LOGGER.isLevelEnabled(Level.TRACE)) {
-						LOGGER.trace("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
+					if(LOGGER.isLevelEnabled(Level.DEBUG)) {
+						LOGGER.debug("Copying file {}, {}, {} ", p, Arrays.toString(pluginConfiguration.getWatchResources()), Arrays.toString(pluginConfiguration.getExtraClasspath()));
 					}
 					
 					File f = new File(p);
@@ -123,19 +116,17 @@ public class FacesServletPlugin {
 						try {
 							File d = new File(u.getFile());
 							if (f.getAbsolutePath().startsWith(d.getAbsolutePath())) {
-								String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "/");
-								if (x.endsWith("//") || x.endsWith("\\/")) {
-									x = x.replace("//", "/").replace("\\/", "/");
-								}
+								String x = f.getAbsolutePath().replace(d.getAbsolutePath(), "");
+								x = x.replace('\\','/').replace("//", "/");
 	
 								File toCopy = new File(realPath, x);
-								LOGGER.trace("Copying file {} to {} (isFile:{})", p, toCopy.getAbsolutePath(), toCopy.isFile());
+								LOGGER.debug("Copying file {} to {} (isFile:{})", f.toPath(), toCopy.getAbsolutePath(), toCopy.isFile());
 								if(!toCopy.isFile()) {
 									continue;
 								}
 								try {
-									Files.copy(f.toPath(), toCopy.toPath(), StandardCopyOption.REPLACE_EXISTING);
-								} catch (IOException e) {
+									IOUtils.copy(f, toCopy);
+								} catch (Exception e) {
 									LOGGER.error("Error copying file {} to {} ",e, p, d + x);
 								}
 							} else {
