@@ -1,6 +1,8 @@
 package org.hotswap.agent.watch.nio;
 
 import org.hotswap.agent.annotation.FileEvent;
+import org.hotswap.agent.logging.AgentLogger;
+import org.hotswap.agent.logging.AgentLogger.Level;
 import org.hotswap.agent.watch.WatchFileEvent;
 import org.hotswap.agent.watch.WatchEventListener;
 import org.hotswap.agent.watch.Watcher;
@@ -28,15 +30,17 @@ public class WatcherNIO2Test {
 
     @Before
     public void setup() throws IOException {
+    	AgentLogger.setLevel(Level.TRACE);
         watcher = new WatcherFactory().getWatcher();
         temp = Files.createTempDirectory("watcherNIO2Test");
-
+        temp.toFile().deleteOnExit();
         watcher.run();
     }
 
     @After
     public void tearDown() {
-        watcher.run();
+        watcher.stop();
+        temp.toFile().delete();
     }
 
     @Test
@@ -51,8 +55,19 @@ public class WatcherNIO2Test {
             }
         });
 
-        File testFile = new File(temp.toFile(), "test.class");
+        File testFile = new File(temp.toFile(), "ahaha/aa/");
+        testFile.mkdirs();
+        testFile = new File(temp.toFile(), "ahaha/fff/dfh/");
+        testFile.mkdirs();
+        //temp.toFile().delete();
+        testFile = new File(temp.toFile(), "test.class");
+       
+        
         testFile.createNewFile();
+    	//java.io.WinNTFileSystem fd;//.createFileExclusively(Native Method)
+
+
+
 
         assertTrue("Event listener called", waitForResult(resultHolder));
     }
@@ -69,8 +84,14 @@ public class WatcherNIO2Test {
                 resultHolder.result = true;
             }
         });
-
-        File testFile = new File(uri.toURL().getFile(), "test.class");
+        File testFile = new File(uri.toURL().getFile(), "ahaha/aa");
+        testFile.mkdirs();
+        testFile = new File(uri.toURL().getFile(), "ahaha/fff/dfh");
+        testFile.mkdirs();
+        temp.toFile().delete();
+        testFile = new File(uri.toURL().getFile(), "test.class");
+       
+        
         testFile.createNewFile();
 
         assertTrue("Event listener not called", waitForResult(resultHolder));

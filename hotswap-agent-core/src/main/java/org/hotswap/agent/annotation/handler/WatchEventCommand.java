@@ -198,7 +198,7 @@ public class WatchEventCommand<T extends Annotation> extends MergeableCommand {
 	 * @return created class
 	 * @throws org.hotswap.agent.javassist.NotFoundException
 	 */
-	private CtClass createCtClass(URI uri, ClassLoader classLoader) throws NotFoundException, IOException {
+	private CtClass createCtClass(URI uri, ClassLoader classLoader) throws NotFoundException, IOException, IllegalArgumentException {
 		ClassPool cp = new ClassPool();
 		cp.appendClassPath(new LoaderClassPath(classLoader));
 

@@ -68,14 +68,16 @@ public class TreeWatcherNIO extends AbstractNIO2Watcher {
 	 * Register the given directory, and all its sub-directories, with the
 	 * WatchService.
 	 */
-	protected void registerAll(final Path parent, final Path start) throws IOException {
+	protected void registerAll(final Path parent, Path start) throws IOException {
 		// register directory and sub-directories
-		LOGGER.info("Registering directory  {} under parent {}", parent,  start);
-		if(parent != null && keys.values().contains(parent)) {
-			LOGGER.info("Registering directory  {} under parent {}, SKIPPED", parent,  start);
-			return;
+		LOGGER.info("Registering directory  {} under parent {}", start, parent);
+//		if(parent != null && keys.values().contains(parent)) {
+//			LOGGER.info("Registering directory  {} under parent {}, SKIPPED", start, parent);
+//			return;
+//		}
+		if(parent == null){
+			start = start.getParent();
 		}
-		
 		register(parent, start);
 	}
 }

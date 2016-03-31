@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -63,9 +64,9 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	protected Map<WatchEventListener, ClassLoader> classLoaderListeners = new HashMap<WatchEventListener, ClassLoader>();
 
 	private Thread runner;
-	
+
 	private boolean stopped;
-	
+
 	private volatile boolean paused = false;
 
 	public AbstractNIO2Watcher() throws IOException {
@@ -134,8 +135,7 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	 */
 	@Override
 	public void closeClassLoader(ClassLoader classLoader) {
-		for (Iterator<Map.Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet()
-				.iterator(); entryIterator.hasNext();) {
+		for (Iterator<Map.Entry<WatchEventListener, ClassLoader>> entryIterator = classLoaderListeners.entrySet().iterator(); entryIterator.hasNext();) {
 			Map.Entry<WatchEventListener, ClassLoader> entry = entryIterator.next();
 			if (entry.getValue().equals(classLoader)) {
 				entryIterator.remove();
@@ -173,18 +173,18 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	 * Process all events for keys queued to the watcher
 	 *
 	 * @return true if should continue
+	 * @throws InterruptedException
 	 */
-	private boolean processEvents() {
+	private boolean processEvents() throws InterruptedException {
 
 		// wait for key to be signalled
-		WatchKey key;
-		try {
-			key = watcher.take();
-		} catch (InterruptedException x) {
-			return false;
+		WatchKey key = watcher.poll(10, TimeUnit.MILLISECONDS);
+		if(key == null) {
+			return true;
 		}
 
 		Path dir = keys.get(key);
+		
 		if (dir == null) {
 			LOGGER.warning("WatchKey '{}' not recognized", key);
 			return true;
@@ -205,11 +205,11 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 
 			LOGGER.debug("Watch event '{}' on '{}'", event.kind().name(), child);
 
-			//if(!paused) {
-				callListeners(event, child);
-			//}else {
-			//	LOGGER.debug("Polling is paused...");
-			//}
+			// if(!paused) {
+			callListeners(event, child);
+			// }else {
+			// LOGGER.debug("Polling is paused...");
+			// }
 			// if directory is created, and watching recursively, then
 			// register it and its sub-directories
 			if (kind == ENTRY_CREATE) {
@@ -232,16 +232,23 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 			if (keys.isEmpty()) {
 				return false;
 			}
+			if(classLoaderListeners.isEmpty()) {
+				for(WatchKey k: keys.keySet()) {
+					k.cancel();
+				}
+				return false;
+			}
 		}
 		return true;
 	}
 
 	// notify listeners about new event
 	private void callListeners(final WatchEvent<?> event, final Path path) {
-		//LOGGER.debug("Checking {} --->  {}", path, event.kind());
+		// LOGGER.debug("Checking {} ---> {}", path, event.kind());
 		boolean matchedOne = false;
 		for (Map.Entry<Path, List<WatchEventListener>> list : listeners.entrySet()) {
-			//LOGGER.debug("Checking {} ---> {}, {}", path, list.getKey(), event.kind());
+			// LOGGER.debug("Checking {} ---> {}, {}", path, list.getKey(),
+			// event.kind());
 			if (path.startsWith(list.getKey())) {
 				matchedOne = true;
 				for (WatchEventListener listener : list.getValue()) {
@@ -249,13 +256,13 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 					try {
 						listener.onEvent(agentEvent);
 					} catch (Throwable e) {
-						LOGGER.error("Error in watch event '{}' listener '{}'", e, agentEvent, listener);
+						//LOGGER.error("Error in watch event '{}' listener '{}'", e, agentEvent, listener);
 					}
 				}
 			}
 		}
-		if(!matchedOne) {
-			LOGGER.error("No match for  watch event '{}',  path '{}'",  event, path);
+		if (!matchedOne) {
+			LOGGER.error("No match for  watch event '{}',  path '{}'", event, path);
 		}
 	}
 
@@ -265,10 +272,14 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 		runner = new Thread() {
 			@Override
 			public void run() {
-				for (;;) {
-					if (stopped || !processEvents()) {
-						break;
+				try {
+					for (;;) {
+						if (stopped || !processEvents()) {
+							break;
+						}
 					}
+				} catch (InterruptedException x) {
+
 				}
 			}
 		};
@@ -280,8 +291,6 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	public void stop() {
 		stopped = true;
 	}
-
-
 
 	public boolean isPaused() {
 		return paused;
@@ -301,8 +310,8 @@ public abstract class AbstractNIO2Watcher implements Watcher, DynamicMBean {
 	public void setAttribute(Attribute attribute)
 			throws AttributeNotFoundException, InvalidAttributeValueException, MBeanException, ReflectionException {
 		paused = (Boolean) attribute.getValue();
-		
-		LOGGER.info("Setting wather to paused = '{}'",  paused);
+
+		LOGGER.info("Setting wather to paused = '{}'", paused);
 
 	}
 
