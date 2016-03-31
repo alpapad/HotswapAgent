@@ -1,12 +1,13 @@
 package org.hotswap.agent.util;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import org.hotswap.agent.javassist.ClassPool;
 import org.hotswap.agent.logging.AgentLogger;
@@ -17,18 +18,47 @@ import org.hotswap.agent.logging.AgentLogger;
 public class IOUtils {
 	private static AgentLogger LOGGER = AgentLogger.getLogger(IOUtils.class);
 
-	// some IDEs remove and recreate whole package multiple times while
-	// recompiling -
-	// we may need to wait for a file to be available on a filesystem
-	private static int WAIT_FOR_FILE_MAX_SECONDS = 5;
-
 	/** URL protocol for a file in the file system: "file" */
 	public static final String URL_PROTOCOL_FILE = "file";
 
 	/** URL protocol for a JBoss VFS resource: "vfs" */
 	public static final String URL_PROTOCOL_VFS = "vfs";
 
-	
+	// some IDEs remove and recreate whole package multiple times while
+	// recompiling -
+	// we may need to wait for a file to be available on a filesystem
+	private static boolean fileIsMutating(File file){
+	      long oldSize = 0L;
+	      long newSize = 1L;
+	      boolean fileIsOpen = true;
+	      
+	      int count = 0;
+	      //File file = new File(uri);
+	      
+	      while((newSize > oldSize) || fileIsOpen){
+	    	  if(count > 15) {
+	    		  return true;
+	    	  }
+	          oldSize = file.length();
+	          try {
+	            Thread.sleep(300);
+	          } catch (InterruptedException e) {
+	            LOGGER.debug("Thread interupted.... {}", e, file);
+	            return true;
+	          }
+	          newSize = file.length();
+
+	          try(InputStream is = new FileInputStream(file)){
+	              fileIsOpen = false;
+	          }catch(Exception e){
+	        	  LOGGER.trace("File is locked/open {}", e, file);
+	        	  count++;
+	          }
+	      }
+
+	      return false;
+	      		
+	}
 	/**
 	 * Download URI to byte array.
 	 *
@@ -43,33 +73,18 @@ public class IOUtils {
 	 *             for download problems
 	 */
 	public static byte[] toByteArray(URI uri) throws IOException {	
-		int tryCount = 0;
-		while (true) {
-			try(InputStream inputStream  = uri.toURL().openStream();) {
-				break;
-			} catch (FileNotFoundException e) {
-				// some IDEs remove and recreate whole package multiple times
-				// while recompiling -
-				// we may need to waitForResult for the file.
-				if (tryCount > WAIT_FOR_FILE_MAX_SECONDS * 10) {
-					LOGGER.trace("File not found, exiting with exception...", e);
-					throw new IllegalArgumentException(e);
-				} else {
-					tryCount++;
-					LOGGER.trace("File not found, waiting...", e);
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e1) {
-					}
-				}
-			} catch (Exception e) {
-				throw new IllegalStateException(e);
-			} 
+		if(fileIsMutating(new File(uri))) {
+			throw new IllegalArgumentException("URI " + uri + " can not be opened!");
 		}
-
 		return Files.readAllBytes(new File(uri).toPath());
 	}
 
+	public static void copy(File source, File dest) throws IOException{
+		if(fileIsMutating(source)) {
+			throw new IllegalArgumentException("File  " + source + " can not be opened!");
+		}
+		Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	}
 	/**
 	 * Convert input stream to a string.
 	 * 
