@@ -150,13 +150,13 @@ public class PluginManager {
 
 		LOGGER.debug("Registering transformer ");
 		instrumentation.addTransformer(hotswapTransformer);
-		scheduler.scheduleCommand(new Command() {
-			@Override
-			public void executeCommand() {
-				LOGGER.info("Registering JMX ");
-				startMbean();
-			}
-		}, 3000);				
+//		scheduler.scheduleCommand(new Command() {
+//			@Override
+//			public void executeCommand() {
+//				LOGGER.info("Registering JMX ");
+//				startMbean();
+//			}
+//		}, 3000);				
 	}
 
 	public void startMbean(){

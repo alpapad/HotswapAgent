@@ -41,7 +41,6 @@ public class PurgeWildFlyBeanELResolverCacheCommand extends MergeableCommand {
 						Method beanElResolverMethod = appClassLoader.loadClass("org.jboss.el.cache.BeanPropertiesCache").getDeclaredMethod("getProperties", new Class<?>[] {});
 						Object o = beanElResolverMethod.invoke(null);
 	
-						@SuppressWarnings("unchecked")
 						Map<Class<?>, Object> m = Map.class.cast(o);
 	
 						Iterator<Map.Entry<Class<?>, Object>> it = m.entrySet().iterator();
