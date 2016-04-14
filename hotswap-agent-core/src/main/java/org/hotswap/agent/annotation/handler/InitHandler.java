@@ -14,6 +14,7 @@ import org.hotswap.agent.config.PluginConfiguration;
 import org.hotswap.agent.config.PluginManager;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.HotswapTransformer;
+import org.hotswap.agent.versions.VersionUtil;
 import org.hotswap.agent.watch.Watcher;
 
 /**
@@ -136,7 +137,7 @@ public class InitHandler implements PluginHandler<Init> {
 	 * @return resolved instance or null (error is logged)
 	 */
 	protected Object resolveType(ClassLoader classLoader, Class<?> pluginClass, Class<?> type) {
-
+	    //VersionUtil.dumpVersion(classLoader,pluginClass);
 		if (type.isAssignableFrom(PluginManager.class)) {
 			return pluginManager;
 		} else if (type.isAssignableFrom(Watcher.class)) {

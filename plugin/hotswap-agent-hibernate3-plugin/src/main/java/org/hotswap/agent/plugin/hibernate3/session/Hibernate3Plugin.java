@@ -1,5 +1,6 @@
 package org.hotswap.agent.plugin.hibernate3.session;
 
+import org.hotswap.agent.annotation.Artifact;
 import org.hotswap.agent.annotation.FileEvent;
 import org.hotswap.agent.annotation.Init;
 import org.hotswap.agent.annotation.LoadEvent;
@@ -20,83 +21,87 @@ import org.hotswap.agent.util.AnnotationHelper;
  * @author Jiri Bubnik
  */
 @Plugin(name = "Hibernate3", //
-		description = "Reload Hibernate configuration after entity create/change.", //
-		testedVersions = { "3.6" }, //
-		expectedVersions = { "3.6" }, //
-		supportClass = { Hibernate3Transformers.class })
+        description = "Reload Hibernate configuration after entity create/change.", //
+        testedVersions = { "3.6" }, //
+        expectedVersions = { "3.6" }, //
+        supportClass = { Hibernate3Transformers.class }, //
+        artifacts = { //
+                @Artifact(version = "[3.0.0,4.0.0)", id = "", vendor = ""), //
+                @Artifact(version = "[3.0.0,4.0.0)", id = "", vendor = "") //
+        })
+
 public class Hibernate3Plugin {
-	private static final String ENTITY_ANNOTATION = "javax.persistence.Entity";
-	private static AgentLogger LOGGER = AgentLogger.getLogger(Hibernate3Plugin.class);
+    private static final String ENTITY_ANNOTATION = "javax.persistence.Entity";
+    private static AgentLogger LOGGER = AgentLogger.getLogger(Hibernate3Plugin.class);
 
-	@Init
-	Scheduler scheduler;
+    @Init
+    Scheduler scheduler;
 
-	@Init
-	ClassLoader appClassLoader;
+    @Init
+    ClassLoader appClassLoader;
 
+    String version;
 
-	String version;
-	
-	// refresh command
-	private final Command reloadSessionFactoryCommand = new ReflectionCommand(this, Hibernate3RefreshCommand.class.getName(), "reloadSessionFactory");
+    // refresh command
+    private final Command reloadSessionFactoryCommand = new ReflectionCommand(this, Hibernate3RefreshCommand.class.getName(), "reloadSessionFactory");
 
-	/**
-	 * Plugin initialization properties (from Hibernate3JPAHelper or
-	 * SessionFactoryProxy)
-	 */
-	@Init
-	public void init() {
-		LOGGER.info("Hibernate3 Session plugin initialized", version);
-	}
+    /**
+     * Plugin initialization properties (from Hibernate3JPAHelper or
+     * SessionFactoryProxy)
+     */
+    @Init
+    public void init() {
+        LOGGER.info("Hibernate3 Session plugin initialized", version);
+    }
 
-	public void setVersion(String v){
-		this.version = v;
-		LOGGER.info("Hibernate Core version '{}'", version);
-	}
-	
-	/**
-	 * Reload after entity class change. It covers also @Entity annotation
-	 * removal.
-	 */
-	@OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
-	public void entityReload(CtClass clazz, Class<?> original) {
-		// TODO list of entity/resource files is known to hibernate, 
-		// better to check this list
-		if (AnnotationHelper.hasAnnotation(original, ENTITY_ANNOTATION) || AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)) {
-			LOGGER.debug("Entity reload class {}, original classloader {}", clazz.getName(), original.getClassLoader());
-			refresh(500);
-		}
-	}
+    public void setVersion(String v) {
+        this.version = v;
+        LOGGER.info("Hibernate Core version '{}'", version);
+    }
 
-	/**
-	 * New entity class - not covered by reloading mechanism.
-	 * <p/>
-	 * Increase the reload timeout to avoid duplicate reloading in case of
-	 * recompile with IDE and delete/create event sequence - than create is
-	 * cached by this event and hotswap for the same class by entityReload.
-	 */
-	@OnClassFileEvent(classNameRegexp = ".*", events = { FileEvent.CREATE })
-	public void newEntity(CtClass clazz) throws Exception {
-		if (AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)) {
-			refresh(500);
-		}
-	}
-	
-	@OnResourceFileEvent(path = "/", filter = ".*.hbm.xml")
-	public void refreshOnHbm(){
-		refresh(500);
-	}
-	
-	@OnResourceFileEvent(path = "/", filter = ".*.cfg.xml")
-	public void refreshOnCfg(){
-		refresh(500);
-	}
-	
-	// reload the configuration - schedule a command to run in the application
-	// classloader and merge
-	// duplicate commands.
-	public void refresh(int timeout) {
-		scheduler.scheduleCommand(reloadSessionFactoryCommand, timeout);
-	}
+    /**
+     * Reload after entity class change. It covers also @Entity annotation
+     * removal.
+     */
+    @OnClassLoadEvent(classNameRegexp = ".*", events = LoadEvent.REDEFINE)
+    public void entityReload(CtClass clazz, Class<?> original) {
+        // TODO list of entity/resource files is known to hibernate,
+        // better to check this list
+        if (AnnotationHelper.hasAnnotation(original, ENTITY_ANNOTATION) || AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)) {
+            LOGGER.debug("Entity reload class {}, original classloader {}", clazz.getName(), original.getClassLoader());
+            refresh(500);
+        }
+    }
+
+    /**
+     * New entity class - not covered by reloading mechanism.
+     * <p/>
+     * Increase the reload timeout to avoid duplicate reloading in case of
+     * recompile with IDE and delete/create event sequence - than create is
+     * cached by this event and hotswap for the same class by entityReload.
+     */
+    @OnClassFileEvent(classNameRegexp = ".*", events = { FileEvent.CREATE })
+    public void newEntity(CtClass clazz) throws Exception {
+        if (AnnotationHelper.hasAnnotation(clazz, ENTITY_ANNOTATION)) {
+            refresh(500);
+        }
+    }
+
+    @OnResourceFileEvent(path = "/", filter = ".*.hbm.xml")
+    public void refreshOnHbm() {
+        refresh(500);
+    }
+
+    @OnResourceFileEvent(path = "/", filter = ".*.cfg.xml")
+    public void refreshOnCfg() {
+        refresh(500);
+    }
+
+    // reload the configuration - schedule a command to run in the application
+    // classloader and merge
+    // duplicate commands.
+    public void refresh(int timeout) {
+        scheduler.scheduleCommand(reloadSessionFactoryCommand, timeout);
+    }
 
 }

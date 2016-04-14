@@ -49,4 +49,10 @@ public @interface Plugin {
 	 * supporting class in addition to pluginClass itself.
 	 */
 	Class<?>[] supportClass() default {};
+	
+	/**
+	 * List of matching artifacts
+	 * @return
+	 */
+	Artifact[] artifacts() default {};
 }

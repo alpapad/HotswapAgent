@@ -21,6 +21,7 @@ import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
 import org.hotswap.agent.util.AppClassLoaderExecutor;
 import org.hotswap.agent.util.HotswapTransformer;
+import org.hotswap.agent.versions.VersionUtil;
 
 /**
  * Transform method handler - handle @OnClassLoadEvent annotation on a method.
@@ -96,6 +97,8 @@ public class OnClassLoadedHandler implements PluginHandler<OnClassLoadEvent> {
 	 */
 	public byte[] transform(PluginAnnotation<OnClassLoadEvent> pluginAnnotation, ClassLoader classLoader,
 			String className, Class<?> redefiningClass, ProtectionDomain protectionDomain, byte[] bytes) {
+	    
+	    //VersionUtil.dumpVersion(classLoader, pluginAnnotation.getPluginClass(), className);
 		// skip synthetic classes
 		if (pluginAnnotation.getAnnotation().skipSynthetic()) {
 			if (isSyntheticClass(className) || redefiningClass != null && redefiningClass.isSynthetic()) {
