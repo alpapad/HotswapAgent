@@ -10,13 +10,13 @@ import org.hotswap.agent.javassist.CtField;
 import org.hotswap.agent.javassist.CtMethod;
 import org.hotswap.agent.javassist.NotFoundException;
 import org.hotswap.agent.logging.AgentLogger;
-import org.hotswap.agent.plugin.weld.beans.HotSwappingContext;
 import org.hotswap.agent.plugin.weld.beans.ContextualReloadHelper;
+import org.hotswap.agent.plugin.weld.beans.HotSwappingContext;
 
 public class CdiContextsTransformer {
 
 	private static AgentLogger LOGGER = AgentLogger.getLogger(CdiContextsTransformer.class);
-
+	
 	@OnClassLoadEvent(classNameRegexp = "org.jboss.weld.manager.BeanManagerImpl")
 	public static void transformBeanManagerImpl(CtClass clazz, ClassPool classPool) throws NotFoundException {
 		CtField f = clazz.getField("contexts");
@@ -29,6 +29,8 @@ public class CdiContextsTransformer {
 	    LOGGER.debug("Adding interface {} to {}.", HotSwappingContext.class.getName(), clazz.getName());
 	    clazz.addInterface(classPool.get(HotSwappingContext.class.getName()));
 
+	    clazz.addField(CtField.make("public java.util.concurrent.atomic.AtomicBoolean _isReloading = new java.util.concurrent.atomic.AtomicBoolean(false);", clazz));
+	    
 	    
 		clazz.addField(CtField.make("public java.util.Set _toRelaod = new java.util.HashSet();", clazz));
 
@@ -39,14 +41,14 @@ public class CdiContextsTransformer {
 	    CtMethod getBeans = CtMethod.make("public java.util.Set getBeans(){return _toRelaod;}", clazz);
 	    clazz.addMethod(getBeans);
 	
-		CtMethod _reload = CtMethod.make("public void _reload() {" + ContextualReloadHelper.class.getName() +".reload(this);}", clazz);
+		CtMethod _reload = CtMethod.make("public void _reload() {" + ContextualReloadHelper.class.getName() +".reload(this);_isReloading.set(false);}", clazz);
 		clazz.addMethod(_reload);
 		
 
 		CtMethod _isActive = clazz.getDeclaredMethod("isActive");
 		_isActive.setName("_isActive");
 
-		CtMethod isActive = CtMethod.make("public boolean isActive() {  boolean active = _isActive(); if(active){ _reload();} return active;}", clazz);
+		CtMethod isActive = CtMethod.make("public boolean isActive() {  boolean active = _isActive(); if(active && _isReloading.compareAndSet(false, true)){ _reload();} return active;}", clazz);
 
 		clazz.addMethod(isActive);
 

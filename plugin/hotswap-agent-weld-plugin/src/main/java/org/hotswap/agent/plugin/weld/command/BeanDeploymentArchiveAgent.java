@@ -89,14 +89,16 @@ public class BeanDeploymentArchiveAgent {
         	LOGGER.debug("BeanDeploymentArchiveAgent registerArchive bdaId='{}' archivePath='{}'.", beanArchive.getId(), archivePath);
             // check that it is regular file
             // toString() is weird and solves HiearchicalUriException for URI like "file:./src/resources/file.txt".
-            File path = new File(archivePath);
-            boolean contain = (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "contains", new Class[] {String.class}, archivePath);
-            if (!contain) {
-                bdaAgent = new BeanDeploymentArchiveAgent(beanArchive, archivePath);
-                ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader),
-                    "put", new Class[] {String.class, BeanDeploymentArchiveAgent.class}, archivePath, bdaAgent);
-                bdaAgent.register();
-            }
+        	if(archivePath != null) {
+	            File path = new File(archivePath);
+	            boolean contain = (boolean) ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader), "contains", new Class[] {String.class}, archivePath);
+	            if (!contain) {
+	                bdaAgent = new BeanDeploymentArchiveAgent(beanArchive, archivePath);
+	                ReflectionHelper.invoke(null, Class.forName(BdaAgentRegistry.class.getName(), true, classLoader),
+	                    "put", new Class[] {String.class, BeanDeploymentArchiveAgent.class}, archivePath, bdaAgent);
+	                bdaAgent.register();
+	            }
+        	}
         } catch (IllegalArgumentException e) {
             LOGGER.warning("Unable to watch BeanDeploymentArchive with id={}", beanArchive.getId());
         }
