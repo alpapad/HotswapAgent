@@ -87,7 +87,7 @@ public class VersionRange {
         }
 
         List<Restriction> restrictions = new ArrayList<>();
-        String process = spec;
+        String process = spec.trim();
         ArtifactVersion version = null;
         ArtifactVersion upperBound = null;
         ArtifactVersion lowerBound = null;
@@ -131,7 +131,7 @@ public class VersionRange {
                 throw new InvalidVersionSpecificationException("Only fully-qualified sets allowed in multiple set scenario: " + spec);
             } else {
                 version = new ArtifactVersion(process);
-                restrictions.add(Restriction.EVERYTHING);
+                restrictions.add(new Restriction(version, true, version, true));//Restriction.EVERYTHING);
             }
         }
 

@@ -97,8 +97,11 @@ public class OnClassLoadedHandler implements PluginHandler<OnClassLoadEvent> {
 	 */
 	public byte[] transform(PluginAnnotation<OnClassLoadEvent> pluginAnnotation, ClassLoader classLoader,
 			String className, Class<?> redefiningClass, ProtectionDomain protectionDomain, byte[] bytes) {
-	    
-	    //VersionUtil.dumpVersion(classLoader, pluginAnnotation.getPluginClass(), className);
+		
+		if (pluginAnnotation.getPlugin() != null) {
+			VersionUtil.dumpVersion(classLoader, pluginAnnotation.getPluginClass(), className);
+		}
+		
 		// skip synthetic classes
 		if (pluginAnnotation.getAnnotation().skipSynthetic()) {
 			if (isSyntheticClass(className) || redefiningClass != null && redefiningClass.isSynthetic()) {

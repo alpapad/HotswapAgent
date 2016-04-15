@@ -405,7 +405,7 @@ public class ComparableVersion implements Comparable<ComparableVersion> {
     }
 
     public boolean equals(Object o) {
-        return (o instanceof ComparableVersion) && canonical.equals(((ComparableVersion) o).canonical);
+        return (o instanceof ComparableVersion) && canonical.equals(ComparableVersion.class.cast(o).canonical);
     }
 
     public int hashCode() {

@@ -29,6 +29,13 @@ import java.util.NoSuchElementException;
  * @author <a href="mailto:brett@apache.org">Brett Porter</a>
  */
 public class ArtifactVersion implements Comparable<ArtifactVersion> {
+    
+	private final String version;
+    
+    private final String id;
+    
+    private final String description;
+    
     private Integer majorVersion;
 
     private Integer minorVersion;
@@ -42,9 +49,29 @@ public class ArtifactVersion implements Comparable<ArtifactVersion> {
     private ComparableVersion comparable;
 
     public ArtifactVersion(String version) {
+        this(version,"","");
+    }
+    
+    public ArtifactVersion(String version, String name, String vendor) {
+        this.version = version != null ? version.trim() : "";
+        this.id = name != null ? name.trim() : "";
+        this.description = vendor != null ? vendor.trim() : "";    	
         parseVersion(version);
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    
     @Override
     public int hashCode() {
         return 11 + comparable.hashCode();
@@ -60,7 +87,7 @@ public class ArtifactVersion implements Comparable<ArtifactVersion> {
             return false;
         }
 
-        return compareTo((ArtifactVersion) other) == 0;
+        return compareTo(ArtifactVersion.class.cast(other)) == 0;
     }
 
     public int compareTo(ArtifactVersion otherVersion) {
@@ -169,6 +196,12 @@ public class ArtifactVersion implements Comparable<ArtifactVersion> {
             throw new NumberFormatException("Number is invalid");
         }
     }
+
+	public String dump() {
+		return "ArtifactVersion [version=" + version + ", id=" + id + ", description=" + description + ", majorVersion="
+				+ majorVersion + ", minorVersion=" + minorVersion + ", incrementalVersion=" + incrementalVersion
+				+ ", buildNumber=" + buildNumber + ", qualifier=" + qualifier + ", comparable=" + comparable + "]";
+	}
 
     @Override
     public String toString() {

@@ -18,7 +18,6 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
-import org.hotswap.agent.command.Command;
 import org.hotswap.agent.command.Scheduler;
 import org.hotswap.agent.command.impl.SchedulerImpl;
 import org.hotswap.agent.logging.AgentLogger;
