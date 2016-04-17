@@ -1,5 +1,7 @@
 Hotswap Agent
 =============
+
+[![Join the chat at https://gitter.im/alpapad/HotswapAgent](https://badges.gitter.im/alpapad/HotswapAgent.svg)](https://gitter.im/alpapad/HotswapAgent?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Java unlimited runtime class and resource redefinition.
 
 
